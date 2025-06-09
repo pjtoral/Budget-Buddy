@@ -36,7 +36,10 @@ class SignUpScreen extends StatelessWidget {
                 SizedBox(height: 40),
                 Text(
                   'Create your account',
-                  style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+                  style: GoogleFonts.inter(
+                    fontSize: 24,
+                    fontWeight: FontWeight.bold,
+                  ),
                 ),
                 SizedBox(height: 32),
 
@@ -104,7 +107,7 @@ class SignUpScreen extends StatelessWidget {
                     ),
                     child: Text(
                       'Sign Up',
-                      style: TextStyle(
+                      style: GoogleFonts.inter(
                         fontSize: 16,
                         fontWeight: FontWeight.bold,
                       ),
@@ -121,11 +124,11 @@ class SignUpScreen extends StatelessWidget {
                   child: RichText(
                     text: TextSpan(
                       text: 'Already have an account? ',
-                      style: TextStyle(color: Colors.black),
+                      style: GoogleFonts.inter(color: Colors.black),
                       children: [
                         TextSpan(
                           text: 'Log in',
-                          style: TextStyle(
+                          style: GoogleFonts.inter(
                             color: Colors.black,
                             decoration: TextDecoration.underline,
                             fontWeight: FontWeight.bold,

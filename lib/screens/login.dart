@@ -89,7 +89,7 @@ class LoginScreenState extends State<LoginScreen> {
                     children: [
                       Text(
                         'Log in to your account!',
-                        style: TextStyle(
+                        style: GoogleFonts.inter(
                           fontSize: 20,
                           fontWeight: FontWeight.bold,
                         ),
@@ -183,7 +183,7 @@ class LoginScreenState extends State<LoginScreen> {
                       },
                       child: Text(
                         'Forgot Password?',
-                        style: TextStyle(
+                        style: GoogleFonts.inter(
                           color: Colors.black,
                           decoration: TextDecoration.underline,
                           fontWeight: FontWeight.w500,
@@ -211,7 +211,7 @@ class LoginScreenState extends State<LoginScreen> {
                               ? CircularProgressIndicator(color: Colors.white)
                               : Text(
                                 'Login',
-                                style: TextStyle(
+                                style: GoogleFonts.inter(
                                   fontSize: 16,
                                   fontWeight: FontWeight.bold,
                                 ),
@@ -231,14 +231,14 @@ class LoginScreenState extends State<LoginScreen> {
                     child: RichText(
                       text: TextSpan(
                         text: "Don't have an account? ",
-                        style: TextStyle(
+                        style: GoogleFonts.inter(
                           color: const Color.fromARGB(255, 0, 0, 0),
                           fontSize: 15,
                         ),
                         children: [
                           TextSpan(
                             text: "Sign Up",
-                            style: TextStyle(
+                            style: GoogleFonts.inter(
                               color: Colors.black,
                               decoration: TextDecoration.underline,
                               fontWeight: FontWeight.bold,

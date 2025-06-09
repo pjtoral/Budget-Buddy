@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 // import 'signup.dart';
 import 'login.dart';
+import 'topup.dart';
+import 'deduct.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -73,7 +75,7 @@ class _HomeScreenState extends State<HomeScreen> {
                       children: [
                         Text(
                           'Hi, Welcome!',
-                          style: TextStyle(
+                          style: GoogleFonts.inter(
                             color: Colors.grey,
                             fontSize: 14,
                             fontWeight: FontWeight.w400,
@@ -81,7 +83,7 @@ class _HomeScreenState extends State<HomeScreen> {
                         ),
                         Text(
                           'potanginamo',
-                          style: TextStyle(
+                          style: GoogleFonts.inter(
                             color: Colors.black,
                             fontSize: 18,
                             fontWeight: FontWeight.bold,
@@ -95,22 +97,178 @@ class _HomeScreenState extends State<HomeScreen> {
                 ],
               ),
             ),
-            SizedBox(height: 20),
-            Text(
-              'Quick Actions',
-              style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+            SizedBox(height: 10),
+            Container(
+              margin: EdgeInsets.all(16),
+              padding: EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+              decoration: BoxDecoration(
+                color: Color(0xFFFFFFFF),
+                border: Border.all(width: 1.0, color: const Color(0xEEE0E0E0)),
+                borderRadius: BorderRadius.circular(40),
+              ),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.start,
+                children: [
+                  SizedBox(width: 12),
+                  //Welcome texts
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        //Text
+                        Text(
+                          'Current Balance',
+                          style: GoogleFonts.inter(
+                            color: Colors.black,
+                            fontSize: 16,
+                          ),
+                        ),
+                        SizedBox(height: 10),
+                        Text(
+                          '₱4,321.01',
+                          style: GoogleFonts.inter(
+                            color: Colors.black,
+                            fontSize: 40,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                        SizedBox(height: 25),
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            //Top up button
+                            ElevatedButton(
+                              onPressed: () {
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (context) => TopUpPage(),
+                                  ),
+                                );
+                              },
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: Colors.black, // Button color
+                                padding: EdgeInsets.symmetric(
+                                  horizontal: 15,
+                                  vertical: 10,
+                                ),
+                              ),
+                              child: Row(
+                                mainAxisSize:
+                                    MainAxisSize
+                                        .min, // Ensures the Row takes only the required space
+                                children: [
+                                  // Icon with circular background
+                                  Container(
+                                    decoration: BoxDecoration(
+                                      color: Colors.white,
+                                      shape: BoxShape.circle,
+                                    ),
+                                    padding: EdgeInsets.all(6),
+                                    child: Icon(
+                                      Icons.add,
+                                      color: Colors.black,
+                                      size: 20,
+                                    ),
+                                  ),
+                                  SizedBox(width: 8),
+                                  Text(
+                                    'Top Up',
+                                    style: GoogleFonts.inter(
+                                      color: Colors.white,
+                                      fontSize: 16,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                            //Deduct button
+                            ElevatedButton(
+                              onPressed: () {
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (context) => DeductPage(),
+                                  ),
+                                );
+                              },
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: Colors.black, // Button color
+                                padding: EdgeInsets.symmetric(
+                                  horizontal: 15,
+                                  vertical: 10,
+                                ),
+                              ),
+                              child: Row(
+                                mainAxisSize:
+                                    MainAxisSize
+                                        .min, // Ensures the Row takes only the required space
+                                children: [
+                                  // Icon with circular background
+                                  Container(
+                                    decoration: BoxDecoration(
+                                      color: Colors.white,
+                                      shape: BoxShape.circle,
+                                    ),
+                                    padding: EdgeInsets.all(6),
+                                    child: Icon(
+                                      Icons.remove,
+                                      color: Colors.black,
+                                      size: 20,
+                                    ),
+                                  ),
+                                  SizedBox(width: 8),
+                                  Text(
+                                    'Deduct',
+                                    style: GoogleFonts.inter(
+                                      color: Colors.white,
+                                      fontSize: 16,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
             ),
-            SizedBox(height: 16),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-              children: [
-                _buildQuickActionButton(Icons.add, 'Add Income', Colors.green),
-                _buildQuickActionButton(
-                  Icons.remove,
-                  'Add Expense',
-                  Colors.red,
+            Container(
+              margin: EdgeInsets.all(16),
+              padding: EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+              child: SingleChildScrollView(
+                scrollDirection:
+                    Axis.horizontal, // Enables horizontal scrolling
+                child: Row(
+                  children: [
+                    // Example of horizontally scrollable cards
+                    _buildQuickActionButton(Icons.add, 'Top Up', Colors.green),
+                    SizedBox(width: 16),
+                    _buildQuickActionButton(Icons.remove, 'Deduct', Colors.red),
+                    SizedBox(width: 16),
+                    _buildQuickActionButton(
+                      Icons.history,
+                      'History',
+                      Colors.blue,
+                    ),
+                    SizedBox(width: 16),
+                    _buildQuickActionButton(
+                      Icons.analytics,
+                      'Analytics',
+                      Colors.orange,
+                    ),
+                    SizedBox(width: 16),
+                    _buildQuickActionButton(
+                      Icons.settings,
+                      'Settings',
+                      Colors.purple,
+                    ),
+                  ],
                 ),
-              ],
+              ),
             ),
           ],
         ),
@@ -148,7 +306,7 @@ class _HomeScreenState extends State<HomeScreen> {
                     SizedBox(height: 8),
                     Text(
                       'Chart will go here',
-                      style: TextStyle(color: Colors.grey[600]),
+                      style: GoogleFonts.inter(color: Colors.grey[600]),
                     ),
                   ],
                 ),
@@ -157,7 +315,10 @@ class _HomeScreenState extends State<HomeScreen> {
             SizedBox(height: 20),
             Text(
               'Spending Categories',
-              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+              style: GoogleFonts.inter(
+                fontSize: 18,
+                fontWeight: FontWeight.bold,
+              ),
             ),
             SizedBox(height: 16),
             _buildCategoryItem('Food & Dining', '\$450', Colors.orange),
@@ -261,11 +422,17 @@ class _HomeScreenState extends State<HomeScreen> {
                   SizedBox(height: 16),
                   Text(
                     'John Doe',
-                    style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+                    style: GoogleFonts.inter(
+                      fontSize: 24,
+                      fontWeight: FontWeight.bold,
+                    ),
                   ),
                   Text(
                     'john.doe@example.com',
-                    style: TextStyle(fontSize: 16, color: Colors.grey[600]),
+                    style: GoogleFonts.inter(
+                      fontSize: 16,
+                      color: Colors.grey[600],
+                    ),
                   ),
                 ],
               ),
@@ -293,7 +460,7 @@ class _HomeScreenState extends State<HomeScreen> {
                     borderRadius: BorderRadius.circular(8),
                   ),
                 ),
-                child: Text('Logout', style: TextStyle(fontSize: 16)),
+                child: Text('Logout', style: GoogleFonts.inter(fontSize: 16)),
               ),
             ),
           ],
@@ -314,7 +481,7 @@ class _HomeScreenState extends State<HomeScreen> {
           child: Icon(icon, size: 30, color: color),
         ),
         SizedBox(height: 8),
-        Text(label, style: TextStyle(fontSize: 12)),
+        Text(label, style: GoogleFonts.inter(fontSize: 12)),
       ],
     );
   }
@@ -334,7 +501,7 @@ class _HomeScreenState extends State<HomeScreen> {
           ),
           SizedBox(width: 12),
           Expanded(child: Text(category)),
-          Text(amount, style: TextStyle(fontWeight: FontWeight.bold)),
+          Text(amount, style: GoogleFonts.inter(fontWeight: FontWeight.bold)),
         ],
       ),
     );
@@ -358,7 +525,7 @@ class _HomeScreenState extends State<HomeScreen> {
         subtitle: Text(date),
         trailing: Text(
           amount,
-          style: TextStyle(fontWeight: FontWeight.bold, color: color),
+          style: GoogleFonts.inter(fontWeight: FontWeight.bold, color: color),
         ),
       ),
     );
