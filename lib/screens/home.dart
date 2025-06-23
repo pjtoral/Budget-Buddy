@@ -1,9 +1,13 @@
+import 'package:budgetbuddy_project/screens/notification.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 // import 'signup.dart';
 import 'login.dart';
 import 'topup.dart';
 import 'deduct.dart';
+import 'settings.dart';
+import 'helpsupport.dart';
+import 'about.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -438,10 +442,42 @@ class _HomeScreenState extends State<HomeScreen> {
               ),
             ),
             SizedBox(height: 40),
-            _buildProfileOption(Icons.settings, 'Settings'),
-            _buildProfileOption(Icons.notifications, 'Notifications'),
-            _buildProfileOption(Icons.help, 'Help & Support'),
-            _buildProfileOption(Icons.info, 'About'),
+            _buildProfileOption(Icons.settings,
+             'Settings',
+             onTap: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => SettingsPage()),
+              );
+              },
+             ),
+            _buildProfileOption(Icons.notifications,
+             'Notifications',
+             onTap: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => NotificationsPage()),
+              );
+             },
+             ),
+            _buildProfileOption(Icons.help, 
+            'Help & Support',
+            onTap: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => HelpSupportPage()),
+              );
+            },
+            ),
+            _buildProfileOption(Icons.info, 
+            'About',
+            onTap: (){
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => AboutPage()),
+              );
+            },
+            ),
             SizedBox(height: 20),
             SizedBox(
               width: double.infinity,
@@ -531,14 +567,12 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  Widget _buildProfileOption(IconData icon, String title) {
+  Widget _buildProfileOption(IconData icon, String title, {VoidCallback? onTap}) {
     return ListTile(
       leading: Icon(icon),
       title: Text(title),
       trailing: Icon(Icons.arrow_forward_ios, size: 16),
-      onTap: () {
-        // Handle option tap
-      },
+      onTap: onTap,
     );
   }
 
