@@ -159,6 +159,9 @@ class LoginScreenState extends State<LoginScreen> {
                       }
                       return null;
                     },
+                    onFieldSubmitted: (_) {
+                      if(!_isLoading) _login();
+                    },
                   ),
 
                   // Forgot Password
