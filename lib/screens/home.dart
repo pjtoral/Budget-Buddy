@@ -82,7 +82,7 @@ class _HomeScreenState extends State<HomeScreen> {
                           ),
                         ),
                         Text(
-                          'potanginamo',
+                          'UserName',
                           style: GoogleFonts.inter(
                             color: Colors.black,
                             fontSize: 18,
@@ -244,28 +244,28 @@ class _HomeScreenState extends State<HomeScreen> {
                     Axis.horizontal, // Enables horizontal scrolling
                 child: Row(
                   children: [
-                    // Example of horizontally scrollable cards
-                    _buildQuickActionButton(Icons.add, 'Top Up', Colors.green),
-                    SizedBox(width: 16),
-                    _buildQuickActionButton(Icons.remove, 'Deduct', Colors.red),
-                    SizedBox(width: 16),
-                    _buildQuickActionButton(
-                      Icons.history,
-                      'History',
-                      Colors.blue,
-                    ),
-                    SizedBox(width: 16),
-                    _buildQuickActionButton(
-                      Icons.analytics,
-                      'Analytics',
-                      Colors.orange,
-                    ),
-                    SizedBox(width: 16),
-                    _buildQuickActionButton(
-                      Icons.settings,
-                      'Settings',
-                      Colors.purple,
-                    ),
+                    // // Example of horizontally scrollable cards
+                    // _buildQuickActionButton(Icons.add, 'Top Up', Colors.green),
+                    // SizedBox(width: 16),
+                    // _buildQuickActionButton(Icons.remove, 'Deduct', Colors.red),
+                    // SizedBox(width: 16),
+                    // _buildQuickActionButton(
+                    //   Icons.history,
+                    //   'History',
+                    //   Colors.blue,
+                    // ),
+                    // SizedBox(width: 16),
+                    // _buildQuickActionButton(
+                    //   Icons.analytics,
+                    //   'Analytics',
+                    //   Colors.orange,
+                    // ),
+                    // SizedBox(width: 16),
+                    // _buildQuickActionButton(
+                    //   Icons.settings,
+                    //   'Settings',
+                    //   Colors.purple,
+                    // ),
                   ],
                 ),
               ),
