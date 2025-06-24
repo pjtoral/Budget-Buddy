@@ -36,7 +36,11 @@ class AboutPage extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Center(
-                    child: Icon(Icons.account_balance_wallet_rounded, size: 56, color: Colors.black87),
+                    child: Icon(
+                      Icons.account_balance_wallet_rounded,
+                      size: 56,
+                      color: Colors.black87,
+                    ),
                   ),
                   SizedBox(height: 16),
                   Center(
@@ -65,11 +69,19 @@ class AboutPage extends StatelessWidget {
                     ),
                   ),
                   SizedBox(height: 8),
-                  _featureItem('• Instantly see your current balance and recent transactions.'),
+                  _featureItem(
+                    '• Instantly see your current balance and recent transactions.',
+                  ),
                   _featureItem('• Add income or expenses with a single tap.'),
-                  _featureItem('• Categorize your spending for better insights.'),
-                  _featureItem('• Visualize your financial trends with clear, simple graphs.'),
-                  _featureItem('• Clean, distraction-free interface for easy navigation.'),
+                  _featureItem(
+                    '• Categorize your spending for better insights.',
+                  ),
+                  _featureItem(
+                    '• Visualize your financial trends with clear, simple graphs.',
+                  ),
+                  _featureItem(
+                    '• Clean, distraction-free interface for easy navigation.',
+                  ),
                   SizedBox(height: 20),
                   Text(
                     'How to Use',
@@ -80,9 +92,15 @@ class AboutPage extends StatelessWidget {
                     ),
                   ),
                   SizedBox(height: 8),
-                  _featureItem('1. Tap "Top Up" to add income or "Deduct" to record expenses.'),
-                  _featureItem('2. View your transaction history and reports in the Graph Report tab.'),
-                  _featureItem('3. Manage your profile and settings from the account tab.'),
+                  _featureItem(
+                    '1. Tap "Add" to add income or "Deduct" to record expenses.',
+                  ),
+                  _featureItem(
+                    '2. View your transaction history and reports in the Graph Report tab.',
+                  ),
+                  _featureItem(
+                    '3. Manage your profile and settings from the account tab.',
+                  ),
                   SizedBox(height: 24),
                   Center(
                     child: Text(
@@ -106,10 +124,7 @@ class AboutPage extends StatelessWidget {
   Widget _featureItem(String text) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 6.0),
-      child: Text(
-        text,
-        style: TextStyle(fontSize: 15, color: Colors.black87),
-      ),
+      child: Text(text, style: TextStyle(fontSize: 15, color: Colors.black87)),
     );
   }
 }
