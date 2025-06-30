@@ -1,11 +1,32 @@
+import 'package:budgetbuddy_project/common/app_strings.dart';
+import 'package:budgetbuddy_project/common/string_helpers.dart';
+import 'package:budgetbuddy_project/screens/home_page/deduct.dart';
+import 'package:budgetbuddy_project/screens/home_page/topup.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:fl_chart/fl_chart.dart';
-import 'add_page.dart';
-import 'deduct.dart';
 
-class HomePage extends StatelessWidget {
+class HomePage extends StatefulWidget {
   HomePage({super.key});
+
+  @override
+  State<HomePage> createState() => _HomePageState();
+}
+
+class _HomePageState extends State<HomePage> {
+  double currentBalanceHome = 0.0;
+  @override
+  void initState() {
+    // TODO: implement initState
+    super.initState();
+    currentBalanceHome = currentBalance;
+  }
+
+  void updateBalance() {
+    setState(() {
+      currentBalanceHome = currentBalance;
+    });
+  }
 
   final List<Map<String, dynamic>> transactionSummaries = [
     {
@@ -47,10 +68,10 @@ class HomePage extends StatelessWidget {
     'June 8, 2025',
   ];
 
+  int highlightIndex = 3; // Thursday
+
   @override
   Widget build(BuildContext context) {
-    int highlightIndex = 3; // Thursday
-
     return SafeArea(
       child: SingleChildScrollView(
         child: Padding(
@@ -134,7 +155,7 @@ class HomePage extends StatelessWidget {
                     ),
                     SizedBox(height: 10),
                     Text(
-                      '₱4,321.01',
+                      formatMoney(currentBalanceHome),
                       style: GoogleFonts.inter(
                         color: Colors.black,
                         fontSize: 40,
@@ -152,7 +173,9 @@ class HomePage extends StatelessWidget {
                               Navigator.push(
                                 context,
                                 MaterialPageRoute(
-                                  builder: (context) => AddPage(),
+                                  builder:
+                                      (context) =>
+                                          TopUpPage(onConfirm: updateBalance),
                                 ),
                               );
                             },
