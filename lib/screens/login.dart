@@ -160,7 +160,7 @@ class LoginScreenState extends State<LoginScreen> {
                       return null;
                     },
                     onFieldSubmitted: (_) {
-                      if(!_isLoading) _login();
+                      if (!_isLoading) _login();
                     },
                   ),
 
