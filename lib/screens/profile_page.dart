@@ -1,9 +1,10 @@
+import 'package:budgetbuddy_project/screens/profile_page/about.dart';
+import 'package:budgetbuddy_project/screens/profile_page/helpsupport.dart';
+import 'package:budgetbuddy_project/screens/profile_page/notification.dart';
+import 'package:budgetbuddy_project/screens/profile_page/settings.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'settings.dart';
-import 'notification.dart';
-import 'helpsupport.dart';
-import 'about.dart';
+
 import 'login.dart';
 
 class ProfilePage extends StatelessWidget {

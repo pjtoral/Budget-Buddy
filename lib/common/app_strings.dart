@@ -1,0 +1,1 @@
+double currentBalance = 100;
