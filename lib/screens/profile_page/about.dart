@@ -7,7 +7,7 @@ class AboutPage extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text('About'),
+        title: Text('What is Budget Buddy?'),
         backgroundColor: Colors.white,
         foregroundColor: Colors.black,
         centerTitle: true,

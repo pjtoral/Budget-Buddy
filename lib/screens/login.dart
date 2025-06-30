@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'signup.dart';
-import 'home.dart';
+import 'home_page/home.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});

@@ -1,13 +1,13 @@
-import 'package:budgetbuddy_project/screens/notification.dart';
+import 'package:budgetbuddy_project/screens/profile_page/notification.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 // import 'signup.dart';
-import 'login.dart';
+import '../login.dart';
 import 'topup.dart';
 import 'deduct.dart';
-import 'settings.dart';
-import 'helpsupport.dart';
-import 'about.dart';
+import '../profile_page/settings.dart';
+import '../profile_page/helpsupport.dart';
+import '../profile_page/about.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -396,71 +396,74 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  Widget _buildProfilePage() {
-    return SafeArea(
-      child: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              'Profile',
-              style: GoogleFonts.inter(
-                fontSize: 28,
-                fontWeight: FontWeight.bold,
-              ),
+ Widget _buildProfilePage() {
+  return SafeArea(
+    child: Padding(
+      padding: const EdgeInsets.all(16.0),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'Profile',
+            style: GoogleFonts.inter(
+              fontSize: 28,
+              fontWeight: FontWeight.bold,
             ),
-            SizedBox(height: 20),
-            Center(
-              child: Column(
-                children: [
-                  CircleAvatar(
-                    radius: 50,
-                    backgroundColor: Colors.blue[100],
-                    child: Icon(
-                      Icons.person,
-                      size: 60,
-                      color: Colors.blue[800],
-                    ),
+          ),
+          SizedBox(height: 20),
+          Center(
+            child: Column(
+              children: [
+                CircleAvatar(
+                  radius: 50,
+                  backgroundColor: Colors.blue[100],
+                  child: Icon(
+                    Icons.person,
+                    size: 60,
+                    color: Colors.blue[800],
                   ),
-                  SizedBox(height: 16),
-                  Text(
-                    'John Doe',
-                    style: GoogleFonts.inter(
-                      fontSize: 24,
-                      fontWeight: FontWeight.bold,
-                    ),
+                ),
+                SizedBox(height: 16),
+                Text(
+                  'John Doe',
+                  style: GoogleFonts.inter(
+                    fontSize: 24,
+                    fontWeight: FontWeight.bold,
                   ),
-                  Text(
-                    'john.doe@example.com',
-                    style: GoogleFonts.inter(
-                      fontSize: 16,
-                      color: Colors.grey[600],
-                    ),
+                ),
+                Text(
+                  'john.doe@example.com',
+                  style: GoogleFonts.inter(
+                    fontSize: 16,
+                    color: Colors.grey[600],
                   ),
-                ],
-              ),
+                ),
+              ],
             ),
-            SizedBox(height: 40),
-            _buildProfileOption(Icons.settings,
-             'Settings',
-             onTap: () {
+          ),
+          SizedBox(height: 40),
+          _buildProfileOption(
+            Icons.settings,
+            'Settings',
+            onTap: () {
               Navigator.push(
                 context,
                 MaterialPageRoute(builder: (context) => SettingsPage()),
               );
-              },
-             ),
-            _buildProfileOption(Icons.notifications,
-             'Notifications',
-             onTap: () {
+            },
+          ),
+          _buildProfileOption(
+            Icons.notifications,
+            'Notifications',
+            onTap: () {
               Navigator.push(
                 context,
                 MaterialPageRoute(builder: (context) => NotificationsPage()),
               );
-             },
-             ),
-            _buildProfileOption(Icons.help, 
+            },
+          ),
+          _buildProfileOption(
+            Icons.help,
             'Help & Support',
             onTap: () {
               Navigator.push(
@@ -468,42 +471,89 @@ class _HomeScreenState extends State<HomeScreen> {
                 MaterialPageRoute(builder: (context) => HelpSupportPage()),
               );
             },
-            ),
-            _buildProfileOption(Icons.info, 
-            'About',
-            onTap: (){
+          ),
+          _buildProfileOption(
+            Icons.info,
+            'What is Budget Buddy?',
+            onTap: () {
               Navigator.push(
                 context,
                 MaterialPageRoute(builder: (context) => AboutPage()),
               );
             },
-            ),
-            SizedBox(height: 20),
-            SizedBox(
-              width: double.infinity,
-              child: ElevatedButton(
-                onPressed: () {
-                  Navigator.pushReplacement(
-                    context,
-                    MaterialPageRoute(builder: (context) => LoginScreen()),
-                  );
-                },
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.red,
-                  foregroundColor: Colors.white,
-                  padding: EdgeInsets.symmetric(vertical: 12),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(8),
-                  ),
+          ),
+          SizedBox(height: 20),
+          // Updated Logout Button with Confirmation Popup
+          SizedBox(
+            width: double.infinity,
+            child: ElevatedButton(
+              onPressed: () {
+                // Show confirmation dialog
+                showDialog(
+                  context: context,
+                  builder: (BuildContext context) {
+                    return AlertDialog(
+                      title: Text(
+                        "Logout Confirmation",
+                        style: GoogleFonts.inter(),
+                      ),
+                      content: Text(
+                        "Are you sure you want to logout?",
+                        style: GoogleFonts.inter(),
+                      ),
+                      actions: [
+                        TextButton(
+                          onPressed: () {
+                            Navigator.pop(context); // Close the dialog
+                          },
+                          child: Text(
+                            "Cancel",
+                            style: GoogleFonts.inter(),
+                          ),
+                        ),
+                        TextButton(
+                          onPressed: () {
+                            Navigator.pop(context); // Close the dialog
+                            Navigator.pushReplacement(
+                              context,
+                              MaterialPageRoute(builder: (context) => LoginScreen()),
+                            ); // Proceed with logout
+                          },
+                          child: Text(
+                            "Logout",
+                            style: GoogleFonts.inter(
+                              color: Colors.red,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ),
+                      ],
+                    );
+                  },
+                );
+              },
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.red,
+                foregroundColor: Colors.white,
+                padding: EdgeInsets.symmetric(vertical: 12),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(8),
                 ),
-                child: Text('Logout', style: GoogleFonts.inter(fontSize: 16)),
+              ),
+              child: Text(
+                'Logout',
+                style: GoogleFonts.inter(
+                  fontSize: 16,
+                  fontWeight: FontWeight.bold,
+                ),
               ),
             ),
-          ],
-        ),
+          ),
+        ],
       ),
-    );
-  }
+    ),
+  );
+}
 
   Widget _buildQuickActionButton(IconData icon, String label, Color color) {
     return Column(
