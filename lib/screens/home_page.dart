@@ -2,12 +2,13 @@ import 'package:budgetbuddy_project/common/app_strings.dart';
 import 'package:budgetbuddy_project/common/string_helpers.dart';
 import 'package:budgetbuddy_project/screens/home_page/deduct.dart';
 import 'package:budgetbuddy_project/screens/home_page/topup.dart';
+import 'package:budgetbuddy_project/screens/transaction_page.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:fl_chart/fl_chart.dart';
 
 class HomePage extends StatefulWidget {
-  HomePage({super.key});
+  const HomePage({super.key});
 
   @override
   State<HomePage> createState() => _HomePageState();
@@ -17,7 +18,6 @@ class _HomePageState extends State<HomePage> {
   double currentBalanceHome = 0.0;
   @override
   void initState() {
-    // TODO: implement initState
     super.initState();
     currentBalanceHome = currentBalance;
   }
@@ -72,33 +72,39 @@ class _HomePageState extends State<HomePage> {
 
   @override
   Widget build(BuildContext context) {
+    final screenWidth = MediaQuery.of(context).size.width;
+    final screenHeight = MediaQuery.of(context).size.height;
+
     return SafeArea(
       child: SingleChildScrollView(
         child: Padding(
-          padding: const EdgeInsets.all(16.0),
+          padding: EdgeInsets.all(screenWidth * 0.04),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               // Profile Card
               Container(
-                margin: EdgeInsets.all(16),
-                padding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                margin: EdgeInsets.all(screenWidth * 0.04),
+                padding: EdgeInsets.symmetric(
+                  horizontal: screenWidth * 0.04,
+                  vertical: screenHeight * 0.015,
+                ),
                 decoration: BoxDecoration(
                   color: Color(0xFFFFFFFF),
                   border: Border.all(
                     width: 1.0,
                     color: const Color(0xEEE0E0E0),
                   ),
-                  borderRadius: BorderRadius.circular(40),
+                  borderRadius: BorderRadius.circular(screenWidth * 0.1),
                 ),
                 child: Row(
                   children: [
                     CircleAvatar(
-                      radius: 25,
+                      radius: screenWidth * 0.07,
                       backgroundColor: Colors.grey[300],
                       backgroundImage: AssetImage('assets/images/alden.jpg'),
                     ),
-                    SizedBox(width: 12),
+                    SizedBox(width: screenWidth * 0.03),
                     Expanded(
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
@@ -107,7 +113,7 @@ class _HomePageState extends State<HomePage> {
                             'Hi, Welcome!',
                             style: GoogleFonts.inter(
                               color: Colors.grey,
-                              fontSize: 14,
+                              fontSize: screenWidth * 0.035,
                               fontWeight: FontWeight.w400,
                             ),
                           ),
@@ -115,7 +121,7 @@ class _HomePageState extends State<HomePage> {
                             'UserName',
                             style: GoogleFonts.inter(
                               color: Colors.black,
-                              fontSize: 18,
+                              fontSize: screenWidth * 0.045,
                               fontWeight: FontWeight.bold,
                             ),
                           ),
@@ -124,8 +130,8 @@ class _HomePageState extends State<HomePage> {
                     ),
                     Image.asset(
                       'assets/images/logo.png',
-                      height: 30,
-                      width: 30,
+                      height: screenWidth * 0.08,
+                      width: screenWidth * 0.08,
                     ),
                   ],
                 ),
@@ -133,15 +139,18 @@ class _HomePageState extends State<HomePage> {
               // Balance Card
               Container(
                 width: double.infinity,
-                margin: EdgeInsets.all(16),
-                padding: EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+                margin: EdgeInsets.all(screenWidth * 0.04),
+                padding: EdgeInsets.symmetric(
+                  horizontal: screenWidth * 0.04,
+                  vertical: screenHeight * 0.02,
+                ),
                 decoration: BoxDecoration(
                   color: Color(0xFFFFFFFF),
                   border: Border.all(
                     width: 1.0,
                     color: const Color(0xEEE0E0E0),
                   ),
-                  borderRadius: BorderRadius.circular(40),
+                  borderRadius: BorderRadius.circular(screenWidth * 0.1),
                 ),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -150,19 +159,21 @@ class _HomePageState extends State<HomePage> {
                       'Current Balance',
                       style: GoogleFonts.inter(
                         color: Colors.black,
-                        fontSize: 16,
+                        fontSize: screenWidth * 0.04,
                       ),
                     ),
-                    SizedBox(height: 10),
+                    SizedBox(height: screenHeight * 0.012),
                     Text(
-                      formatMoney(currentBalanceHome),
+                      currentBalanceHome > 10000000
+                          ? 'you are too rich for this app </3'
+                          : formatMoney(currentBalanceHome),
                       style: GoogleFonts.inter(
                         color: Colors.black,
-                        fontSize: 40,
+                        fontSize: screenWidth * 0.09,
                         fontWeight: FontWeight.w600,
                       ),
                     ),
-                    SizedBox(height: 20),
+                    SizedBox(height: screenHeight * 0.025),
                     //Add and Deduct Buttons
                     Row(
                       children: [
@@ -180,19 +191,23 @@ class _HomePageState extends State<HomePage> {
                               );
                             },
                             child: Container(
-                              height: 56,
-                              margin: EdgeInsets.only(right: 8),
+                              height: screenHeight * 0.07,
+                              margin: EdgeInsets.only(
+                                right: screenWidth * 0.02,
+                              ),
                               decoration: BoxDecoration(
                                 color: Colors.black,
-                                borderRadius: BorderRadius.circular(28),
+                                borderRadius: BorderRadius.circular(
+                                  screenHeight * 0.035,
+                                ),
                               ),
                               child: Row(
                                 mainAxisAlignment: MainAxisAlignment.start,
                                 children: [
-                                  SizedBox(width: 18), // Left padding
+                                  SizedBox(width: screenWidth * 0.045),
                                   Container(
-                                    width: 36,
-                                    height: 36,
+                                    width: screenWidth * 0.09,
+                                    height: screenWidth * 0.09,
                                     decoration: BoxDecoration(
                                       color: Colors.white,
                                       shape: BoxShape.circle,
@@ -200,15 +215,15 @@ class _HomePageState extends State<HomePage> {
                                     child: Icon(
                                       Icons.add,
                                       color: Colors.black,
-                                      size: 24,
+                                      size: screenWidth * 0.06,
                                     ),
                                   ),
-                                  SizedBox(width: 12),
+                                  SizedBox(width: screenWidth * 0.03),
                                   Text(
                                     'Add',
                                     style: GoogleFonts.inter(
                                       color: Colors.white,
-                                      fontSize: 18,
+                                      fontSize: screenWidth * 0.045,
                                       fontWeight: FontWeight.w500,
                                     ),
                                   ),
@@ -217,7 +232,7 @@ class _HomePageState extends State<HomePage> {
                             ),
                           ),
                         ),
-                        SizedBox(width: 16),
+                        SizedBox(width: screenWidth * 0.04),
                         // Deduct Button
                         Expanded(
                           child: GestureDetector(
@@ -225,24 +240,28 @@ class _HomePageState extends State<HomePage> {
                               Navigator.push(
                                 context,
                                 MaterialPageRoute(
-                                  builder: (context) => DeductPage(),
+                                  builder:
+                                      (context) =>
+                                          DeductPage(onConfirm: updateBalance),
                                 ),
                               );
                             },
                             child: Container(
-                              height: 56,
-                              margin: EdgeInsets.only(left: 8),
+                              height: screenHeight * 0.07,
+                              margin: EdgeInsets.only(left: screenWidth * 0.02),
                               decoration: BoxDecoration(
                                 color: Colors.black,
-                                borderRadius: BorderRadius.circular(28),
+                                borderRadius: BorderRadius.circular(
+                                  screenHeight * 0.035,
+                                ),
                               ),
                               child: Row(
                                 mainAxisAlignment: MainAxisAlignment.start,
                                 children: [
-                                  SizedBox(width: 18), // Left padding
+                                  SizedBox(width: screenWidth * 0.045),
                                   Container(
-                                    width: 36,
-                                    height: 36,
+                                    width: screenWidth * 0.09,
+                                    height: screenWidth * 0.09,
                                     decoration: BoxDecoration(
                                       color: Colors.white,
                                       shape: BoxShape.circle,
@@ -250,15 +269,15 @@ class _HomePageState extends State<HomePage> {
                                     child: Icon(
                                       Icons.remove,
                                       color: Colors.black,
-                                      size: 24,
+                                      size: screenWidth * 0.06,
                                     ),
                                   ),
-                                  SizedBox(width: 12),
+                                  SizedBox(width: screenWidth * 0.03),
                                   Text(
                                     'Deduct',
                                     style: GoogleFonts.inter(
                                       color: Colors.white,
-                                      fontSize: 18,
+                                      fontSize: screenWidth * 0.045,
                                       fontWeight: FontWeight.w500,
                                     ),
                                   ),
@@ -274,11 +293,14 @@ class _HomePageState extends State<HomePage> {
               ),
               // Transactions Summary
               Container(
-                margin: EdgeInsets.symmetric(horizontal: 16, vertical: 0),
-                padding: EdgeInsets.all(16),
+                margin: EdgeInsets.symmetric(
+                  horizontal: screenWidth * 0.04,
+                  vertical: 0,
+                ),
+                padding: EdgeInsets.all(screenWidth * 0.04),
                 decoration: BoxDecoration(
                   color: Color(0xFFF6F6F6),
-                  borderRadius: BorderRadius.circular(20),
+                  borderRadius: BorderRadius.circular(screenWidth * 0.05),
                 ),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -290,54 +312,71 @@ class _HomePageState extends State<HomePage> {
                           'Transactions',
                           style: GoogleFonts.inter(
                             fontWeight: FontWeight.bold,
-                            fontSize: 16,
+                            fontSize: screenWidth * 0.04,
                           ),
                         ),
-                        Text(
-                          'See More',
-                          style: GoogleFonts.inter(
-                            color: Colors.grey[600],
-                            fontSize: 12,
-                            fontWeight: FontWeight.w500,
+                        GestureDetector(
+                          onTap: () {
+                            // Navigator.push(
+                            //   context,
+                            //   MaterialPageRoute(
+                            //     builder: (context) => HomePage(),
+                            //   ),
+                            // );
+                          },
+                          child: Text(
+                            'See More',
+                            style: GoogleFonts.inter(
+                              color: Colors.grey[600],
+                              fontSize: screenWidth * 0.03,
+                              fontWeight: FontWeight.w500,
+                              decoration: TextDecoration.underline,
+                            ),
                           ),
                         ),
                       ],
                     ),
-                    SizedBox(height: 12),
+                    SizedBox(height: screenHeight * 0.015),
                     SingleChildScrollView(
                       scrollDirection: Axis.horizontal,
                       child: Row(
                         children:
                             transactionSummaries.map((summary) {
                               return Container(
-                                margin: EdgeInsets.only(right: 12),
-                                padding: EdgeInsets.all(12),
+                                margin: EdgeInsets.only(
+                                  right: screenWidth * 0.03,
+                                ),
+                                padding: EdgeInsets.all(screenWidth * 0.03),
                                 decoration: BoxDecoration(
                                   color: Colors.white,
-                                  borderRadius: BorderRadius.circular(12),
+                                  borderRadius: BorderRadius.circular(
+                                    screenWidth * 0.03,
+                                  ),
                                 ),
                                 child: Column(
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
                                     Text(
                                       summary['title'],
-                                      style: GoogleFonts.inter(fontSize: 12),
+                                      style: GoogleFonts.inter(
+                                        fontSize: screenWidth * 0.03,
+                                      ),
                                     ),
-                                    SizedBox(height: 4),
+                                    SizedBox(height: screenHeight * 0.005),
                                     Text(
                                       summary['amount'],
                                       style: GoogleFonts.inter(
                                         color: summary['amountColor'],
                                         fontWeight: FontWeight.bold,
-                                        fontSize: 20,
+                                        fontSize: screenWidth * 0.05,
                                       ),
                                     ),
-                                    SizedBox(height: 4),
+                                    SizedBox(height: screenHeight * 0.005),
                                     Text(
                                       summary['subtitle'],
                                       style: GoogleFonts.inter(
                                         color: Colors.grey[600],
-                                        fontSize: 11,
+                                        fontSize: screenWidth * 0.027,
                                       ),
                                     ),
                                   ],
@@ -351,11 +390,11 @@ class _HomePageState extends State<HomePage> {
               ),
               //Graph Card
               Container(
-                margin: EdgeInsets.all(16),
-                padding: EdgeInsets.all(16),
+                margin: EdgeInsets.all(screenWidth * 0.04),
+                padding: EdgeInsets.all(screenWidth * 0.04),
                 decoration: BoxDecoration(
                   color: Colors.white,
-                  borderRadius: BorderRadius.circular(28),
+                  borderRadius: BorderRadius.circular(screenWidth * 0.07),
                   border: Border.all(color: Color(0xFFE0E0E0)),
                 ),
                 child: Column(
@@ -368,136 +407,143 @@ class _HomePageState extends State<HomePage> {
                           'Graph Report',
                           style: GoogleFonts.inter(
                             fontWeight: FontWeight.bold,
-                            fontSize: 16,
+                            fontSize: screenWidth * 0.04,
                           ),
                         ),
                         Text(
                           'See More',
                           style: GoogleFonts.inter(
                             color: Colors.grey[600],
-                            fontSize: 12,
+                            fontSize: screenWidth * 0.03,
                             fontWeight: FontWeight.w500,
                           ),
                         ),
                       ],
                     ),
-                    SizedBox(height: 12),
+                    SizedBox(height: screenHeight * 0.015),
                     // Overview Title
                     Text(
                       'Overview',
                       style: GoogleFonts.inter(
                         fontWeight: FontWeight.bold,
-                        fontSize: 20,
+                        fontSize: screenWidth * 0.05,
                       ),
                     ),
-                    SizedBox(height: 4),
+                    SizedBox(height: screenHeight * 0.005),
                     Text(
                       'June 2, 2025 - June 8, 2025',
                       style: GoogleFonts.inter(
                         color: Colors.grey[600],
-                        fontSize: 13,
+                        fontSize: screenWidth * 0.032,
                       ),
                     ),
-                    SizedBox(height: 16),
+                    SizedBox(height: screenHeight * 0.02),
                     // Bar Chart
-                    AspectRatio(
-                      aspectRatio: 1.2,
-                      child: BarChart(
-                        BarChartData(
-                          maxY: 8000,
-                          minY: 0,
-                          barTouchData: BarTouchData(
-                            enabled: true,
-                            touchTooltipData: BarTouchTooltipData(
-                              tooltipBgColor: Colors.black,
-                              getTooltipItem: (
-                                group,
-                                groupIndex,
-                                rod,
-                                rodIndex,
-                              ) {
-                                return BarTooltipItem(
-                                  '${dates[group.x]}\n₱${rod.toY.toStringAsFixed(2)}',
-                                  GoogleFonts.inter(
-                                    color: Colors.white,
-                                    fontWeight: FontWeight.bold,
-                                    fontSize: 14,
-                                  ),
-                                );
-                              },
-                            ),
-                          ),
-                          titlesData: FlTitlesData(
-                            leftTitles: AxisTitles(
-                              sideTitles: SideTitles(
-                                showTitles: true,
-                                reservedSize: 40,
-                                getTitlesWidget: (value, meta) {
-                                  if (value % 1000 != 0) return Container();
-                                  return Text(
-                                    '₱${(value ~/ 1000)}K',
-                                    style: GoogleFonts.inter(
-                                      fontSize: 12,
-                                      color: Colors.grey[700],
+                    SizedBox(
+                      width: screenWidth * 0.9,
+                      child: AspectRatio(
+                        aspectRatio: 1.2,
+                        child: BarChart(
+                          BarChartData(
+                            maxY: 8000,
+                            minY: 0,
+                            barTouchData: BarTouchData(
+                              enabled: true,
+                              touchTooltipData: BarTouchTooltipData(
+                                tooltipBgColor: Colors.black,
+                                getTooltipItem: (
+                                  group,
+                                  groupIndex,
+                                  rod,
+                                  rodIndex,
+                                ) {
+                                  return BarTooltipItem(
+                                    '${dates[group.x]}\n₱${rod.toY.toStringAsFixed(2)}',
+                                    GoogleFonts.inter(
+                                      color: Colors.white,
+                                      fontWeight: FontWeight.bold,
+                                      fontSize: screenWidth * 0.035,
                                     ),
                                   );
                                 },
                               ),
                             ),
-                            bottomTitles: AxisTitles(
-                              sideTitles: SideTitles(
-                                showTitles: true,
-                                getTitlesWidget: (value, meta) {
-                                  int idx = value.toInt();
-                                  if (idx < 0 || idx >= days.length)
-                                    return Container();
-                                  return Padding(
-                                    padding: const EdgeInsets.only(top: 6.0),
-                                    child: Text(
-                                      days[idx],
+                            titlesData: FlTitlesData(
+                              leftTitles: AxisTitles(
+                                sideTitles: SideTitles(
+                                  showTitles: true,
+                                  reservedSize: screenWidth * 0.1,
+                                  getTitlesWidget: (value, meta) {
+                                    if (value % 1000 != 0) return Container();
+                                    return Text(
+                                      '₱${(value ~/ 1000)}K',
                                       style: GoogleFonts.inter(
-                                        fontSize: 12,
-                                        color: Colors.grey[800],
+                                        fontSize: screenWidth * 0.03,
+                                        color: Colors.grey[700],
                                       ),
-                                    ),
-                                  );
-                                },
+                                    );
+                                  },
+                                ),
+                              ),
+                              bottomTitles: AxisTitles(
+                                sideTitles: SideTitles(
+                                  showTitles: true,
+                                  getTitlesWidget: (value, meta) {
+                                    int idx = value.toInt();
+                                    if (idx < 0 || idx >= days.length)
+                                      return Container();
+                                    return Padding(
+                                      padding: EdgeInsets.only(
+                                        top: screenHeight * 0.007,
+                                      ),
+                                      child: Text(
+                                        days[idx],
+                                        style: GoogleFonts.inter(
+                                          fontSize: screenWidth * 0.03,
+                                          color: Colors.grey[800],
+                                        ),
+                                      ),
+                                    );
+                                  },
+                                ),
+                              ),
+                              rightTitles: AxisTitles(
+                                sideTitles: SideTitles(showTitles: false),
+                              ),
+                              topTitles: AxisTitles(
+                                sideTitles: SideTitles(showTitles: false),
                               ),
                             ),
-                            rightTitles: AxisTitles(
-                              sideTitles: SideTitles(showTitles: false),
+                            gridData: FlGridData(
+                              show: true,
+                              drawVerticalLine: false,
+                              horizontalInterval: 1000,
+                              getDrawingHorizontalLine:
+                                  (value) => FlLine(
+                                    color: Colors.grey[200],
+                                    strokeWidth: 1,
+                                  ),
                             ),
-                            topTitles: AxisTitles(
-                              sideTitles: SideTitles(showTitles: false),
-                            ),
+                            borderData: FlBorderData(show: false),
+                            barGroups: List.generate(amounts.length, (index) {
+                              return BarChartGroupData(
+                                x: index,
+                                barRods: [
+                                  BarChartRodData(
+                                    toY: amounts[index],
+                                    color:
+                                        index == highlightIndex
+                                            ? Colors.black
+                                            : Colors.grey[350],
+                                    width: screenWidth * 0.07,
+                                    borderRadius: BorderRadius.circular(
+                                      screenWidth * 0.015,
+                                    ),
+                                  ),
+                                ],
+                              );
+                            }),
                           ),
-                          gridData: FlGridData(
-                            show: true,
-                            drawVerticalLine: false,
-                            horizontalInterval: 1000,
-                            getDrawingHorizontalLine:
-                                (value) => FlLine(
-                                  color: Colors.grey[200],
-                                  strokeWidth: 1,
-                                ),
-                          ),
-                          borderData: FlBorderData(show: false),
-                          barGroups: List.generate(amounts.length, (index) {
-                            return BarChartGroupData(
-                              x: index,
-                              barRods: [
-                                BarChartRodData(
-                                  toY: amounts[index],
-                                  color:
-                                      index == highlightIndex
-                                          ? Colors.black
-                                          : Colors.grey[350],
-                                  width: 28,
-                                  borderRadius: BorderRadius.circular(6),
-                                ),
-                              ],
-                            );
-                          }),
                         ),
                       ),
                     ),
