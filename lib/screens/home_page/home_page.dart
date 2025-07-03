@@ -7,7 +7,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:fl_chart/fl_chart.dart';
 
 class HomePage extends StatefulWidget {
-  HomePage({super.key});
+  const HomePage({super.key});
 
   @override
   State<HomePage> createState() => _HomePageState();
@@ -449,8 +449,9 @@ class _HomePageState extends State<HomePage> {
                                 showTitles: true,
                                 getTitlesWidget: (value, meta) {
                                   int idx = value.toInt();
-                                  if (idx < 0 || idx >= days.length)
+                                  if (idx < 0 || idx >= days.length) {
                                     return Container();
+                                  }
                                   return Padding(
                                     padding: const EdgeInsets.only(top: 6.0),
                                     child: Text(

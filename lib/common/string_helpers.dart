@@ -1,4 +1,3 @@
-import 'package:budgetbuddy_project/common/app_strings.dart';
 import 'package:intl/intl.dart';
 
 String formatMoney(num amount) {

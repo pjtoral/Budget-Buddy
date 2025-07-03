@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:budgetbuddy_project/screens/home_page.dart';
-import 'package:budgetbuddy_project/screens/analytics_page.dart';
+import 'package:budgetbuddy_project/screens/home_page/home_page.dart';
+import 'package:budgetbuddy_project/screens//analytics_page/analytics_page.dart';
 import 'package:budgetbuddy_project/screens/transaction_page.dart';
 import 'package:budgetbuddy_project/screens/profile_page.dart';
 
