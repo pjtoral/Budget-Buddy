@@ -53,16 +53,20 @@ class _GraphReportScreenState extends State<GraphReportScreen> {
     double screenHeight = MediaQuery.of(context).size.height;
 
     return Scaffold(
-      backgroundColor: const Color(0xFFF7F7F7),
+      backgroundColor: const Color(0xFFF6F6F6),
       appBar: AppBar(
-        backgroundColor: Colors.white,
+        backgroundColor: Color(0xFFF6F6F6),
         elevation: 0,
-        foregroundColor: Colors.black,
-        title: const Text(
-          'Graph Report',
-          style: TextStyle(color: Colors.black),
+        centerTitle: true,
+        title: Text(
+          'Spending Report',
+          style: GoogleFonts.inter(
+            color: Colors.black,
+            fontSize: 18.0,
+            fontWeight: FontWeight.w600,
+          ),
         ),
-        centerTitle: false,
+        actions: [Padding(padding: const EdgeInsets.only(right: 16.0))],
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(0),
@@ -71,7 +75,12 @@ class _GraphReportScreenState extends State<GraphReportScreen> {
           children: [
             // Category Filter
             Padding(
-              padding: const EdgeInsets.only(top: 24, left: 12, right: 12, bottom: 12),
+              padding: const EdgeInsets.only(
+                top: 24,
+                left: 12,
+                right: 12,
+                bottom: 12,
+              ),
               child: SingleChildScrollView(
                 scrollDirection: Axis.horizontal,
                 child: Row(
@@ -117,7 +126,7 @@ class _GraphReportScreenState extends State<GraphReportScreen> {
               child: Column(
                 children: [
                   Text(
-                    '${categories[selectedCategory]} Overview',
+                    '${categories[selectedCategory]} Spendings',
                     style: GoogleFonts.inter(
                       fontWeight: FontWeight.bold,
                       fontSize: 22,
@@ -143,12 +152,7 @@ class _GraphReportScreenState extends State<GraphReportScreen> {
                           enabled: true,
                           touchTooltipData: BarTouchTooltipData(
                             tooltipBgColor: Colors.black,
-                            getTooltipItem: (
-                              group,
-                              groupIndex,
-                              rod,
-                              rodIndex,
-                            ) {
+                            getTooltipItem: (group, groupIndex, rod, rodIndex) {
                               return BarTooltipItem(
                                 '${dates[group.x]}\n₱${rod.toY.toStringAsFixed(2)}',
                                 GoogleFonts.inter(
@@ -209,10 +213,11 @@ class _GraphReportScreenState extends State<GraphReportScreen> {
                           show: true,
                           drawVerticalLine: false,
                           horizontalInterval: 2000,
-                          getDrawingHorizontalLine: (value) => FlLine(
-                            color: Colors.grey[200],
-                            strokeWidth: 1,
-                          ),
+                          getDrawingHorizontalLine:
+                              (value) => FlLine(
+                                color: Colors.grey[200],
+                                strokeWidth: 1,
+                              ),
                         ),
                         borderData: FlBorderData(show: false),
                         barGroups: List.generate(amounts.length, (index) {
@@ -221,9 +226,10 @@ class _GraphReportScreenState extends State<GraphReportScreen> {
                             barRods: [
                               BarChartRodData(
                                 toY: amounts[index],
-                                color: index == highlightIndex
-                                    ? Colors.black
-                                    : Colors.grey[350],
+                                color:
+                                    index == highlightIndex
+                                        ? Colors.black
+                                        : Colors.grey[350],
                                 width: 32,
                                 borderRadius: BorderRadius.circular(8),
                               ),
@@ -274,7 +280,11 @@ class _GraphReportScreenState extends State<GraphReportScreen> {
                                 ),
                               ),
                               const SizedBox(width: 6),
-                              const Icon(Icons.arrow_upward, color: Colors.green, size: 16),
+                              const Icon(
+                                Icons.arrow_upward,
+                                color: Colors.green,
+                                size: 16,
+                              ),
                               Text(
                                 '+3.5%',
                                 style: GoogleFonts.inter(
@@ -323,7 +333,11 @@ class _GraphReportScreenState extends State<GraphReportScreen> {
                                 ),
                               ),
                               const SizedBox(width: 6),
-                              const Icon(Icons.arrow_downward, color: Colors.red, size: 16),
+                              const Icon(
+                                Icons.arrow_downward,
+                                color: Colors.red,
+                                size: 16,
+                              ),
                               Text(
                                 '-1.4%',
                                 style: GoogleFonts.inter(
