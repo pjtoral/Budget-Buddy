@@ -1,4 +1,3 @@
-import 'package:budgetbuddy_project/screens/home_page/home_page.dart';
 import 'package:flutter/material.dart';
 import 'screens/login.dart';
 

@@ -206,6 +206,7 @@ class _TopUpPageState extends State<TopUpPage> {
                               final newTrans = TransactionModel(
                                 amount: amount,
                                 description: _descriptionController.text,
+                                category: 'Top Up',
                               );
                               TransactionServices.inflow.add(newTrans);
                             }

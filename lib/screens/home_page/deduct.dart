@@ -308,6 +308,7 @@ class _DeductPageState extends State<DeductPage> {
                                 amount: amount,
                                 description:
                                     '${_selectedCategory!}: ${_descriptionController.text}',
+                                category: _selectedCategory!,
                               );
                               TransactionServices.outflow.add(newTrans);
 
