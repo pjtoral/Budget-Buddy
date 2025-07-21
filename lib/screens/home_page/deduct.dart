@@ -204,7 +204,7 @@ class _DeductPageState extends State<DeductPage> {
                                     });
                                   },
                                 );
-                              }).toList(),
+                              }),
                               ListTile(
                                 title: Row(
                                   children: [

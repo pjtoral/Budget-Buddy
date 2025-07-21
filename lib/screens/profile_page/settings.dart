@@ -161,6 +161,7 @@ class _SettingsPageState extends State<SettingsPage> {
           color: Colors.black87,
         ),
       ),
+      shape: Border(),
       trailing: Icon(
         isExpanded ? Icons.keyboard_arrow_up : Icons.keyboard_arrow_down,
         color: Colors.black26,

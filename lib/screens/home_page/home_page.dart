@@ -490,8 +490,9 @@ class _HomePageState extends State<HomePage> {
                                   showTitles: true,
                                   getTitlesWidget: (value, meta) {
                                     int idx = value.toInt();
-                                    if (idx < 0 || idx >= days.length)
+                                    if (idx < 0 || idx >= days.length) {
                                       return Container();
+                                    }
                                     return Padding(
                                       padding: EdgeInsets.only(
                                         top: screenHeight * 0.007,
