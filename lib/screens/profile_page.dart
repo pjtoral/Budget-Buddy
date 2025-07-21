@@ -1,7 +1,10 @@
+import 'package:budgetbuddy_project/main.dart';
 import 'package:budgetbuddy_project/screens/profile_page/about.dart';
 import 'package:budgetbuddy_project/screens/profile_page/helpsupport.dart';
 import 'package:budgetbuddy_project/screens/profile_page/notification.dart';
 import 'package:budgetbuddy_project/screens/profile_page/settings.dart';
+import 'package:budgetbuddy_project/services/local_storage_service.dart';
+import 'package:budgetbuddy_project/services/service_locator.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
@@ -25,6 +28,7 @@ class ProfilePage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+     LocalStorageService storage = locator<LocalStorageService>();
     return SafeArea(
       child: Padding(
         padding: const EdgeInsets.all(16.0),
@@ -115,6 +119,7 @@ class ProfilePage extends StatelessWidget {
               width: double.infinity,
               child: ElevatedButton(
                 onPressed: () {
+                  storage.setLoggedIn(false);
                   Navigator.pushReplacement(
                     context,
                     MaterialPageRoute(builder: (context) => LoginScreen()),
