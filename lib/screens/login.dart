@@ -1,16 +1,20 @@
+import 'package:budgetbuddy_project/main.dart';
 import 'package:budgetbuddy_project/screens/BottomNavBar.dart';
+import 'package:budgetbuddy_project/services/local_storage_service.dart';
+import 'package:budgetbuddy_project/services/service_locator.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'signup.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
-
+  
   @override
   LoginScreenState createState() => LoginScreenState();
 }
 
 class LoginScreenState extends State<LoginScreen> {
+   LocalStorageService storage = locator<LocalStorageService>();
   final _formKey = GlobalKey<FormState>();
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
@@ -41,6 +45,7 @@ class LoginScreenState extends State<LoginScreen> {
         // Simple validation (replace with actual authentication)
         if (_emailController.text == 'user@example.com' &&
             _passwordController.text == 'password123') {
+              storage.setLoggedIn(true);
           Navigator.pushReplacement(
             context,
             MaterialPageRoute(builder: (context) => HomeScreen()),
