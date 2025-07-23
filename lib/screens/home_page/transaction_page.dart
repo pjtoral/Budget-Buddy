@@ -1,9 +1,10 @@
+import 'package:budgetbuddy_project/services/balance_service.dart';
+import 'package:budgetbuddy_project/services/service_locator.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
-import '../services/transaction_services.dart';
-import '../models/transaction_model.dart';
-import '../common/app_strings.dart';
-import '../common/string_helpers.dart';
+import '../../services/transaction_services.dart';
+import '../../models/transaction_model.dart';
+import '../../common/string_helpers.dart';
 
 class TransactionsPage extends StatefulWidget {
   const TransactionsPage({super.key});
@@ -24,22 +25,32 @@ class _TransactionsPageState extends State<TransactionsPage> {
   static const double _transactionTitleFontSize = 16;
   static const double _transactionSubtitleFontSize = 12;
 
+  final TransactionServices _transactionServices = locator<TransactionServices>();
+  final BalanceService _balanceService = locator<BalanceService>();
+  
+  double _currentBalance = 0;
+  String _selectedCategory = 'School';
   final List<String> _categories = [
     'School',
     'Motorcycle',
     'Computer',
     'Shabu',
   ];
-  String _selectedCategory = 'School';
 
-  List<TransactionModel> get _filteredTransactions {
-    final allTransactions = [
-      ...TransactionServices.inflow,
-      ...TransactionServices.outflow,
-    ];
-    return allTransactions
-        .where((tx) => tx.category == _selectedCategory)
-        .toList();
+  @override
+  void initState() {
+    super.initState();
+    _loadInitialData();
+  }
+
+  Future<void> _loadInitialData() async {
+    _currentBalance = await _balanceService.getBalance();
+    setState(() {});
+  }
+
+  Future<List<TransactionModel>> _getFilteredTransactions() async {
+    final allTransactions = await _transactionServices.getTransactionByCategory(_selectedCategory);
+    return allTransactions..sort((a, b) => b.date.compareTo(a.date));
   }
 
   @override
@@ -48,7 +59,7 @@ class _TransactionsPageState extends State<TransactionsPage> {
       child: Scaffold(
         backgroundColor: const Color(0xFFF6F6F6),
         appBar: AppBar(
-          backgroundColor: Color(0xFFF6F6F6),
+          backgroundColor: const Color(0xFFF6F6F6),
           elevation: 0,
           centerTitle: true,
           title: Text(
@@ -78,7 +89,7 @@ class _TransactionsPageState extends State<TransactionsPage> {
                   padding: const EdgeInsets.all(_containerPadding),
                   decoration: BoxDecoration(
                     color: Colors.white,
-                    border: Border.all(color: Color(0xFFE0E0E0), width: 1.0),
+                    border: Border.all(color: const Color(0xFFE0E0E0), width: 1.0),
                     borderRadius: BorderRadius.circular(30),
                   ),
                   child: Column(
@@ -93,7 +104,7 @@ class _TransactionsPageState extends State<TransactionsPage> {
                       ),
                       const SizedBox(height: 8),
                       Text(
-                        formatMoney(currentBalance),
+                        formatMoney(_currentBalance),
                         style: GoogleFonts.inter(
                           color: Colors.black,
                           fontSize: _balanceFontSize,
@@ -112,15 +123,14 @@ class _TransactionsPageState extends State<TransactionsPage> {
                   horizontal: _horizontalPadding,
                 ),
                 child: Row(
-                  children:
-                      _categories
-                          .map(
-                            (cat) => _buildCategoryChip(
-                              cat,
-                              _selectedCategory == cat,
-                            ),
-                          )
-                          .toList(),
+                  children: _categories
+                      .map(
+                        (cat) => _buildCategoryChip(
+                          cat,
+                          _selectedCategory == cat,
+                        ),
+                      )
+                      .toList(),
                 ),
               ),
 
@@ -149,35 +159,36 @@ class _TransactionsPageState extends State<TransactionsPage> {
                     padding: const EdgeInsets.symmetric(
                       horizontal: _horizontalPadding,
                     ),
-                    child: ListView(
-                      shrinkWrap: true,
-                      physics: const NeverScrollableScrollPhysics(),
-                      children:
-                          _filteredTransactions.isEmpty
+                    child: FutureBuilder<List<TransactionModel>>(
+                      future: _getFilteredTransactions(),
+                      builder: (context, snapshot) {
+                        if (snapshot.connectionState == ConnectionState.waiting) {
+                          return const Center(child: CircularProgressIndicator());
+                        }
+                        
+                        final transactions = snapshot.data ?? [];
+                        
+                        return ListView(
+                          shrinkWrap: true,
+                          physics: const NeverScrollableScrollPhysics(),
+                          children: transactions.isEmpty
                               ? [
-                                Padding(
-                                  padding: const EdgeInsets.all(32.0),
-                                  child: Center(
-                                    child: Text(
-                                      'No transactions for this category.',
-                                      style: GoogleFonts.inter(
-                                        color: Colors.grey[600],
-                                        fontSize: 16,
+                                  Padding(
+                                    padding: const EdgeInsets.all(32.0),
+                                    child: Center(
+                                      child: Text(
+                                        'No transactions for this category.',
+                                        style: GoogleFonts.inter(
+                                          color: Colors.grey[600],
+                                          fontSize: 16,
+                                        ),
                                       ),
                                     ),
                                   ),
-                                ),
-                              ]
-                              : _filteredTransactions
-                                  .map(
-                                    (tx) => _buildTransactionItem(
-                                      tx.category,
-                                      tx.description,
-                                      '${TransactionServices.inflow.contains(tx) ? '+' : '-'}${formatMoney(tx.amount)}',
-                                      TransactionServices.inflow.contains(tx),
-                                    ),
-                                  )
-                                  .toList(),
+                                ]
+                              : transactions.map((tx) => _buildTransactionItem(tx)).toList(),
+                        );
+                      },
                     ),
                   ),
                 ),
@@ -212,12 +223,8 @@ class _TransactionsPageState extends State<TransactionsPage> {
     );
   }
 
-  Widget _buildTransactionItem(
-    String category,
-    String description,
-    String amount,
-    bool isPositive,
-  ) {
+  Widget _buildTransactionItem(TransactionModel transaction) {
+    final isInflow = transaction.amount > 0;
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: _transactionSpacing),
       child: Row(
@@ -227,16 +234,16 @@ class _TransactionsPageState extends State<TransactionsPage> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                category,
+                transaction.category,
                 style: GoogleFonts.inter(
                   fontSize: _transactionTitleFontSize,
                   fontWeight: FontWeight.w500,
                 ),
               ),
               const SizedBox(height: 4),
-              if (description.isNotEmpty)
+              if (transaction.description.isNotEmpty)
                 Text(
-                  description,
+                  transaction.description,
                   style: GoogleFonts.inter(
                     fontSize: _transactionSubtitleFontSize,
                     color: Colors.grey[600],
@@ -245,11 +252,11 @@ class _TransactionsPageState extends State<TransactionsPage> {
             ],
           ),
           Text(
-            amount,
+            '${isInflow ? '+' : ''}${formatMoney(transaction.amount)}',
             style: GoogleFonts.inter(
               fontSize: _transactionTitleFontSize,
               fontWeight: FontWeight.w500,
-              color: isPositive ? Colors.green : Colors.red,
+              color: isInflow ? Colors.green : Colors.red,
             ),
           ),
         ],

@@ -2,7 +2,6 @@ import 'package:budgetbuddy_project/common/app_strings.dart';
 import 'package:budgetbuddy_project/common/string_helpers.dart';
 import 'package:budgetbuddy_project/screens/home_page/deduct.dart';
 import 'package:budgetbuddy_project/screens/home_page/topup.dart';
-import 'package:budgetbuddy_project/screens/transaction_page.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:fl_chart/fl_chart.dart';
@@ -15,17 +14,29 @@ class HomePage extends StatefulWidget {
 }
 
 class _HomePageState extends State<HomePage> {
-  double currentBalanceHome = 0.0;
+  final TextEditingController _amountController = TextEditingController();
+
+  double _currentBalanceHome = 0.0;
+  String? _balanceAfter;
+
+
   @override
   void initState() {
     super.initState();
-    currentBalanceHome = currentBalance;
+    _currentBalanceHome = currentBalance;
   }
 
-  void updateBalance() {
-    setState(() {
-      currentBalanceHome = currentBalance;
-    });
+  Future<void> _updateBalance() async {
+    final amount = double.tryParse(_amountController.text);
+    if(amount != null) {
+      setState(() {
+        _balanceAfter = 'Balance after: ₱${(_currentBalanceHome + amount).toStringAsFixed(2)}';
+      });
+    } else {
+      setState(() {
+        _balanceAfter = null;
+      });
+    }
   }
 
   final List<Map<String, dynamic>> transactionSummaries = [
@@ -164,9 +175,9 @@ class _HomePageState extends State<HomePage> {
                     ),
                     SizedBox(height: screenHeight * 0.012),
                     Text(
-                      currentBalanceHome > 10000000
+                      _currentBalanceHome > 10000000
                           ? 'you are too rich for this app </3'
-                          : formatMoney(currentBalanceHome),
+                          : formatMoney(_currentBalanceHome),
                       style: GoogleFonts.inter(
                         color: Colors.black,
                         fontSize: screenWidth * 0.09,
@@ -186,7 +197,7 @@ class _HomePageState extends State<HomePage> {
                                 MaterialPageRoute(
                                   builder:
                                       (context) =>
-                                          TopUpPage(onConfirm: updateBalance),
+                                          TopUpPage(onConfirm: _updateBalance),
                                 ),
                               );
                             },
@@ -242,7 +253,7 @@ class _HomePageState extends State<HomePage> {
                                 MaterialPageRoute(
                                   builder:
                                       (context) =>
-                                          DeductPage(onConfirm: updateBalance),
+                                          DeductPage(onConfirm: _updateBalance),
                                 ),
                               );
                             },

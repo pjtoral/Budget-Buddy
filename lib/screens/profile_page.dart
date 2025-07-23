@@ -1,4 +1,3 @@
-import 'package:budgetbuddy_project/main.dart';
 import 'package:budgetbuddy_project/screens/profile_page/about.dart';
 import 'package:budgetbuddy_project/screens/profile_page/helpsupport.dart';
 import 'package:budgetbuddy_project/screens/profile_page/notification.dart';

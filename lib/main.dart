@@ -3,7 +3,6 @@ import 'package:budgetbuddy_project/services/local_storage_service.dart';
 import 'package:budgetbuddy_project/services/service_locator.dart';
 import 'package:flutter/material.dart';
 import 'screens/login.dart';
-import 'package:get_it/get_it.dart';
 
 
 LocalStorageService storage = LocalStorageService();

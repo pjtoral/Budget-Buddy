@@ -1,38 +1,29 @@
 import 'package:budgetbuddy_project/models/transaction_model.dart';
+import 'package:budgetbuddy_project/services/local_storage_service.dart';
+import 'package:budgetbuddy_project/services/service_locator.dart';
 
+//changed transaction to use TransactionModel
 class TransactionServices {
-  static List<TransactionModel> inflow = [
-    TransactionModel(
-      amount: 102.00,
-      description: 'Money Laundering',
-      category: 'Shabu',
-    ),
-    TransactionModel(
-      amount: 5000.00,
-      description: 'Allowance',
-      category: 'School',
-    ),
-    TransactionModel(
-      amount: 1200.00,
-      description: 'Freelance',
-      category: 'Computer',
-    ),
-  ];
-  static List<TransactionModel> outflow = [
-    TransactionModel(
-      amount: 359.00,
-      description: 'School Supplies',
-      category: 'School',
-    ),
-    TransactionModel(
-      amount: 200.00,
-      description: 'Gasoline',
-      category: 'Motorcycle',
-    ),
-    TransactionModel(
-      amount: 150.00,
-      description: 'PC Upgrade',
-      category: 'Computer',
-    ),
-  ];
+
+  final LocalStorageService _localStorageService = locator<LocalStorageService>();
+  
+  Future<List<TransactionModel>> getInflow() async {
+    final allTransactions = _localStorageService.getTransactions();
+    return allTransactions?.where((t) => t.amount == 0).toList() ?? [];
+  }
+
+  Future<List<TransactionModel>> getOutflow() async {
+    final allTransactions = _localStorageService.getTransactions();
+    return allTransactions?.where((t) => t.amount == 0).toList() ?? [];
+  }
+
+  Future<void> addTransaction(TransactionModel transaction) async {
+    final current = _localStorageService.getTransactions() ?? [];
+    await _localStorageService.saveTransactions([...current, transaction]);
+  }
+
+  Future<List<TransactionModel>> getTransactionByCategory(String category) async {
+    final transactions = _localStorageService.getTransactions();
+    return transactions?.where((t) => t.category == category).toList() ?? [];
+  }
 }

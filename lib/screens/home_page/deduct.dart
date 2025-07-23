@@ -1,5 +1,6 @@
-import 'package:budgetbuddy_project/common/app_strings.dart';
 import 'package:budgetbuddy_project/models/transaction_model.dart';
+import 'package:budgetbuddy_project/services/balance_service.dart';
+import 'package:budgetbuddy_project/services/service_locator.dart';
 import 'package:budgetbuddy_project/services/transaction_services.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -15,18 +16,20 @@ class DeductPage extends StatefulWidget {
 class _DeductPageState extends State<DeductPage> {
   final TextEditingController _amountController = TextEditingController();
   final TextEditingController _descriptionController = TextEditingController();
+  
+  final BalanceService _balanceService = locator<BalanceService>();
+  final TransactionServices _transactionServices = locator<TransactionServices>();
+
+  double _currentBalance = 0;
   String? _selectedCategory;
+  String? _balanceAfter;
   bool _showCategories = false;
   final List<String> _categories = ['School', 'Motorcycle', 'Shabu'];
 
-  String? _balanceAfter;
-
-  void _updateBalance() {
-    final amount = double.tryParse(_amountController.text) ?? 0;
-    setState(() {
-      _balanceAfter =
-          'Balance after: ₱${(currentBalance - amount).toStringAsFixed(2)}';
-    });
+  @override
+  void initState() {
+    super.initState();
+    _loadInitialData();
   }
 
   @override
@@ -34,6 +37,61 @@ class _DeductPageState extends State<DeductPage> {
     _amountController.dispose();
     _descriptionController.dispose();
     super.dispose();
+  }
+
+  Future<void> _loadInitialData() async {
+    _currentBalance = await _balanceService.getBalance();
+  }
+
+  void _updateBalance() {
+    final amount = double.tryParse(_amountController.text) ?? 0;
+    setState(() {
+      _balanceAfter = 'Balance after: ₱${(_currentBalance - amount).toStringAsFixed(2)}';
+    });
+  }
+
+  Future<void> _confirmDeduction() async {
+    final amount = double.tryParse(_amountController.text);
+    
+    // Validation
+    if (amount == null || amount <= 0) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Enter a valid amount')),
+      );
+      return;
+    }
+
+    if (_selectedCategory == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Please select a category')),
+      );
+      return;
+    }
+
+    if (amount > _currentBalance) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Insufficient balance')),
+      );
+      return;
+    }
+
+    // Create transaction
+    final transaction = TransactionModel(
+      amount: -amount, // Negative for outflow
+      description: _descriptionController.text.isNotEmpty
+          ? _descriptionController.text
+          : 'Expense: $_selectedCategory',
+      category: _selectedCategory!,
+      date: DateTime.now(),
+    );
+
+    // Save transaction and update balance
+    await _transactionServices.addTransaction(transaction);
+    await _balanceService.deductBalance(amount);
+    
+    // Notify parent and close
+    widget.onConfirm?.call();
+    Navigator.of(context).pop();
   }
 
   @override
@@ -66,7 +124,7 @@ class _DeductPageState extends State<DeductPage> {
                       ),
                     ),
                   ),
-                  const SizedBox(width: 48), // To balance the IconButton
+                  const SizedBox(width: 48),
                 ],
               ),
             ),
@@ -177,10 +235,9 @@ class _DeductPageState extends State<DeductPage> {
                                 _selectedCategory ?? 'Categories',
                                 style: GoogleFonts.inter(
                                   fontSize: 16,
-                                  color:
-                                      _selectedCategory != null
-                                          ? Colors.black
-                                          : Colors.grey,
+                                  color: _selectedCategory != null
+                                      ? Colors.black
+                                      : Colors.grey,
                                 ),
                               ),
                               Icon(
@@ -217,13 +274,13 @@ class _DeductPageState extends State<DeductPage> {
                                   ],
                                 ),
                                 onTap: () {
-                                  // Add category functionality
+                                  // Implement add category functionality
                                 },
                               ),
                             ],
                           ),
                         const SizedBox(height: 32),
-                        // Description Input (Always visible, big)
+                        // Description Input
                         TextFormField(
                           controller: _descriptionController,
                           decoration: InputDecoration(
@@ -273,48 +330,7 @@ class _DeductPageState extends State<DeductPage> {
                         SizedBox(
                           width: double.infinity,
                           child: ElevatedButton(
-                            onPressed: () {
-                              final amount = double.tryParse(
-                                _amountController.text,
-                              );
-                              if (amount == null || amount <= 0) {
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  const SnackBar(
-                                    content: Text('Enter a valid amount'),
-                                  ),
-                                );
-                                return;
-                              }
-                              if (_selectedCategory == null) {
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  const SnackBar(
-                                    content: Text('Please select a category'),
-                                  ),
-                                );
-                                return;
-                              }
-                              if (amount > currentBalance) {
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  const SnackBar(
-                                    content: Text('Insufficient balance'),
-                                  ),
-                                );
-                                return;
-                              }
-                              setState(() {
-                                currentBalance = currentBalance - amount;
-                              });
-                              final newTrans = TransactionModel(
-                                amount: amount,
-                                description:
-                                    '${_selectedCategory!}: ${_descriptionController.text}',
-                                category: _selectedCategory!,
-                              );
-                              TransactionServices.outflow.add(newTrans);
-
-                              if (widget.onConfirm != null) widget.onConfirm!();
-                              Navigator.of(context).pop();
-                            },
+                            onPressed: _confirmDeduction,
                             style: ElevatedButton.styleFrom(
                               backgroundColor: Colors.black,
                               foregroundColor: Colors.white,
