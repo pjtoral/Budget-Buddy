@@ -2,28 +2,30 @@ class TransactionModel {
   final double amount;
   final String description;
   final String category;
+  final DateTime date;
 
   TransactionModel({
     required this.amount,
     required this.description,
-    required this.category,
+    required this.category, 
+    required this.date,
   });
 
   // Convert a TransactionModel to JSON
-  Map<String, dynamic> toJson() {
-    return {
+  Map<String, dynamic> toJson() => {
       'amount': amount,
       'description': description,
-      'category': category,
-    };
-  }
+      'category': category, 
+      'date': date.toIso8601String(),
+  };
 
-  // Optional: Create a TransactionModel from JSON
+
   factory TransactionModel.fromJson(Map<String, dynamic> json) {
     return TransactionModel(
       amount: json['amount'].toDouble(), // Handles both int and double
       description: json['description'],
-      category: json['category'],
+      category: json['category'], 
+      date: DateTime.parse(json['date']),
     );
   }
 }

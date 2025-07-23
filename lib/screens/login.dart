@@ -1,4 +1,3 @@
-import 'package:budgetbuddy_project/main.dart';
 import 'package:budgetbuddy_project/screens/BottomNavBar.dart';
 import 'package:budgetbuddy_project/services/local_storage_service.dart';
 import 'package:budgetbuddy_project/services/service_locator.dart';
