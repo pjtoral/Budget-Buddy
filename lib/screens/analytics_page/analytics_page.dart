@@ -3,6 +3,7 @@ import 'package:budgetbuddy_project/services/service_locator.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:fl_chart/fl_chart.dart';
+import 'package:auto_size_text/auto_size_text.dart';
 
 class AnalyticsPage extends StatelessWidget {
   const AnalyticsPage({super.key});
@@ -302,10 +303,10 @@ class _GraphReportScreenState extends State<GraphReportScreen> {
                           const SizedBox(height: 6),
                           Row(
                             children: [
-                              Flexible(
-                                child: Text(
-                                  '₱12,589.00',
-                                  overflow: TextOverflow.ellipsis,
+                              Expanded(
+                                child: AutoSizeText(
+                                  '₱12,589.00', // Hardcoded number
+                                  maxLines: 1, // Ensure it stays on one line
                                   style: GoogleFonts.inter(
                                     color: Colors.black,
                                     fontWeight: FontWeight.bold,
