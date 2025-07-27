@@ -1,4 +1,5 @@
 import 'package:budgetbuddy_project/services/balance_service.dart';
+import 'package:budgetbuddy_project/services/local_storage_service.dart';
 import 'package:budgetbuddy_project/services/service_locator.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -25,17 +26,19 @@ class _TransactionsPageState extends State<TransactionsPage> {
   static const double _transactionTitleFontSize = 16;
   static const double _transactionSubtitleFontSize = 12;
 
-  final TransactionServices _transactionServices = locator<TransactionServices>();
+  final TransactionServices _transactionServices =
+      locator<TransactionServices>();
   final BalanceService _balanceService = locator<BalanceService>();
-  
+  final LocalStorageService _localStorageService =
+      locator<LocalStorageService>();
+
   double _currentBalance = 0;
   String _selectedCategory = 'School';
-  final List<String> _categories = [
+  List<String> _categories = [
     'School',
     'Motorcycle',
     'Computer',
-    'Shabu',
-  ];
+  ]; // Changed to non-final
 
   @override
   void initState() {
@@ -45,11 +48,25 @@ class _TransactionsPageState extends State<TransactionsPage> {
 
   Future<void> _loadInitialData() async {
     _currentBalance = await _balanceService.getBalance();
+    await _loadCategories();
     setState(() {});
   }
 
+  Future<void> _loadCategories() async {
+    final categories = _localStorageService.getCategories();
+    if (categories != null && categories.isNotEmpty) {
+      _categories = categories;
+      // If current selected category doesn't exist in new list, select first one
+      if (!_categories.contains(_selectedCategory)) {
+        _selectedCategory = _categories.first;
+      }
+    }
+  }
+
   Future<List<TransactionModel>> _getFilteredTransactions() async {
-    final allTransactions = await _transactionServices.getTransactionByCategory(_selectedCategory);
+    final allTransactions = await _transactionServices.getTransactionByCategory(
+      _selectedCategory,
+    );
     return allTransactions..sort((a, b) => b.date.compareTo(a.date));
   }
 
@@ -89,7 +106,10 @@ class _TransactionsPageState extends State<TransactionsPage> {
                   padding: const EdgeInsets.all(_containerPadding),
                   decoration: BoxDecoration(
                     color: Colors.white,
-                    border: Border.all(color: const Color(0xFFE0E0E0), width: 1.0),
+                    border: Border.all(
+                      color: const Color(0xFFE0E0E0),
+                      width: 1.0,
+                    ),
                     borderRadius: BorderRadius.circular(30),
                   ),
                   child: Column(
@@ -123,14 +143,15 @@ class _TransactionsPageState extends State<TransactionsPage> {
                   horizontal: _horizontalPadding,
                 ),
                 child: Row(
-                  children: _categories
-                      .map(
-                        (cat) => _buildCategoryChip(
-                          cat,
-                          _selectedCategory == cat,
-                        ),
-                      )
-                      .toList(),
+                  children:
+                      _categories
+                          .map(
+                            (cat) => _buildCategoryChip(
+                              cat,
+                              _selectedCategory == cat,
+                            ),
+                          )
+                          .toList(),
                 ),
               ),
 
@@ -162,31 +183,37 @@ class _TransactionsPageState extends State<TransactionsPage> {
                     child: FutureBuilder<List<TransactionModel>>(
                       future: _getFilteredTransactions(),
                       builder: (context, snapshot) {
-                        if (snapshot.connectionState == ConnectionState.waiting) {
-                          return const Center(child: CircularProgressIndicator());
+                        if (snapshot.connectionState ==
+                            ConnectionState.waiting) {
+                          return const Center(
+                            child: CircularProgressIndicator(),
+                          );
                         }
-                        
+
                         final transactions = snapshot.data ?? [];
-                        
+
                         return ListView(
                           shrinkWrap: true,
                           physics: const NeverScrollableScrollPhysics(),
-                          children: transactions.isEmpty
-                              ? [
-                                  Padding(
-                                    padding: const EdgeInsets.all(32.0),
-                                    child: Center(
-                                      child: Text(
-                                        'No transactions for this category.',
-                                        style: GoogleFonts.inter(
-                                          color: Colors.grey[600],
-                                          fontSize: 16,
+                          children:
+                              transactions.isEmpty
+                                  ? [
+                                    Padding(
+                                      padding: const EdgeInsets.all(32.0),
+                                      child: Center(
+                                        child: Text(
+                                          'No transactions for this category.',
+                                          style: GoogleFonts.inter(
+                                            color: Colors.grey[600],
+                                            fontSize: 16,
+                                          ),
                                         ),
                                       ),
                                     ),
-                                  ),
-                                ]
-                              : transactions.map((tx) => _buildTransactionItem(tx)).toList(),
+                                  ]
+                                  : transactions
+                                      .map((tx) => _buildTransactionItem(tx))
+                                      .toList(),
                         );
                       },
                     ),

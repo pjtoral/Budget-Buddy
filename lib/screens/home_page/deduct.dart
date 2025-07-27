@@ -2,12 +2,14 @@ import 'package:budgetbuddy_project/models/transaction_model.dart';
 import 'package:budgetbuddy_project/services/balance_service.dart';
 import 'package:budgetbuddy_project/services/service_locator.dart';
 import 'package:budgetbuddy_project/services/transaction_services.dart';
+import 'package:budgetbuddy_project/services/local_storage_service.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'dart:convert';
 
 class DeductPage extends StatefulWidget {
-  const DeductPage({super.key, this.onConfirm});
-  final Function? onConfirm;
+  const DeductPage({super.key, required this.onConfirm});
+  final Function(double) onConfirm;
 
   @override
   State<DeductPage> createState() => _DeductPageState();
@@ -16,15 +18,20 @@ class DeductPage extends StatefulWidget {
 class _DeductPageState extends State<DeductPage> {
   final TextEditingController _amountController = TextEditingController();
   final TextEditingController _descriptionController = TextEditingController();
-  
+  final TextEditingController _newCategoryController = TextEditingController();
+
   final BalanceService _balanceService = locator<BalanceService>();
-  final TransactionServices _transactionServices = locator<TransactionServices>();
+  final TransactionServices _transactionServices =
+      locator<TransactionServices>();
+  final LocalStorageService _localStorageService =
+      locator<LocalStorageService>();
 
   double _currentBalance = 0;
   String? _selectedCategory;
   String? _balanceAfter;
   bool _showCategories = false;
-  final List<String> _categories = ['School', 'Motorcycle', 'Shabu'];
+  bool _showAddCategory = false;
+  List<String> _categories = ['School', 'Motorcycle', 'Computer'];
 
   @override
   void initState() {
@@ -36,51 +43,74 @@ class _DeductPageState extends State<DeductPage> {
   void dispose() {
     _amountController.dispose();
     _descriptionController.dispose();
+    _newCategoryController.dispose();
     super.dispose();
   }
 
   Future<void> _loadInitialData() async {
     _currentBalance = await _balanceService.getBalance();
+    final categories = _localStorageService.getCategories();
+    if (categories != null) {
+      setState(() => _categories = categories);
+    }
+  }
+
+  Future<void> _saveCategories() async {
+    await _localStorageService.setString('categories', jsonEncode(_categories));
+  }
+
+  void _addNewCategory() {
+    if (_newCategoryController.text.isNotEmpty) {
+      setState(() {
+        _categories.add(_newCategoryController.text);
+        _selectedCategory = _newCategoryController.text;
+        _showAddCategory = false;
+        _newCategoryController.clear();
+      });
+      _saveCategories();
+    }
   }
 
   void _updateBalance() {
     final amount = double.tryParse(_amountController.text) ?? 0;
     setState(() {
-      _balanceAfter = 'Balance after: ₱${(_currentBalance - amount).toStringAsFixed(2)}';
+      _balanceAfter =
+          'Balance after: ₱${(_currentBalance - amount).toStringAsFixed(2)}';
     });
   }
 
   Future<void> _confirmDeduction() async {
     final amount = double.tryParse(_amountController.text);
-    
+
     // Validation
     if (amount == null || amount <= 0) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Enter a valid amount')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('Enter a valid amount')));
       return;
     }
 
     if (_selectedCategory == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Please select a category')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('Please select a category')));
       return;
     }
 
     if (amount > _currentBalance) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Insufficient balance')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('Insufficient balance')));
       return;
     }
 
     // Create transaction
     final transaction = TransactionModel(
       amount: -amount, // Negative for outflow
-      description: _descriptionController.text.isNotEmpty
-          ? _descriptionController.text
-          : 'Expense: $_selectedCategory',
+      description:
+          _descriptionController.text.isNotEmpty
+              ? _descriptionController.text
+              : 'Expense: $_selectedCategory',
       category: _selectedCategory!,
       date: DateTime.now(),
     );
@@ -88,9 +118,9 @@ class _DeductPageState extends State<DeductPage> {
     // Save transaction and update balance
     await _transactionServices.addTransaction(transaction);
     await _balanceService.deductBalance(amount);
-    
+
     // Notify parent and close
-    widget.onConfirm?.call();
+    widget.onConfirm(-amount);
     Navigator.of(context).pop();
   }
 
@@ -163,41 +193,65 @@ class _DeductPageState extends State<DeductPage> {
                           ),
                         ),
                         const SizedBox(height: 12),
-                        TextFormField(
-                          controller: _amountController,
-                          textAlign: TextAlign.center,
-                          style: GoogleFonts.inter(
-                            fontSize: 32,
-                            fontWeight: FontWeight.w700,
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 16,
+                            vertical: 8,
                           ),
-                          decoration: InputDecoration(
-                            prefixText: '₱ ',
-                            prefixStyle: GoogleFonts.inter(
-                              fontSize: 32,
-                              fontWeight: FontWeight.w700,
-                              color: Colors.black,
+                          decoration: BoxDecoration(
+                            color: Colors.grey[100],
+                            borderRadius: BorderRadius.circular(12),
+                            border: Border.all(
+                              color: Colors.grey[300]!,
+                              width: 1.5,
                             ),
-                            hintText: '0.00',
-                            hintStyle: GoogleFonts.inter(
-                              fontSize: 32,
-                              fontWeight: FontWeight.w700,
-                              color: Colors.grey[400],
-                            ),
-                            border: InputBorder.none,
-                            filled: true,
-                            fillColor: Colors.transparent,
-                            contentPadding: EdgeInsets.zero,
                           ),
-                          keyboardType: TextInputType.numberWithOptions(
-                            decimal: true,
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            crossAxisAlignment: CrossAxisAlignment.center,
+                            children: [
+                              Text(
+                                '₱',
+                                style: GoogleFonts.inter(
+                                  fontSize: 32,
+                                  fontWeight: FontWeight.w600,
+                                  color: Colors.black,
+                                ),
+                              ),
+                              const SizedBox(width: 8),
+                              Expanded(
+                                child: TextFormField(
+                                  controller: _amountController,
+                                  textAlign: TextAlign.center,
+                                  style: GoogleFonts.inter(
+                                    fontSize: 32,
+                                    fontWeight: FontWeight.w700,
+                                    color: Colors.black,
+                                  ),
+                                  decoration: InputDecoration(
+                                    hintText: '0.00',
+                                    hintStyle: GoogleFonts.inter(
+                                      fontSize: 32,
+                                      fontWeight: FontWeight.w700,
+                                      color: Colors.grey[400],
+                                    ),
+                                    border: InputBorder.none,
+                                    contentPadding: EdgeInsets.zero,
+                                  ),
+                                  keyboardType: TextInputType.numberWithOptions(
+                                    decimal: true,
+                                  ),
+                                  onChanged: (value) => _updateBalance(),
+                                ),
+                              ),
+                            ],
                           ),
-                          onChanged: (value) => _updateBalance(),
                         ),
                         const SizedBox(height: 8),
                         // Balance After
-                        if (_amountController.text.isNotEmpty)
+                        if (_balanceAfter != null)
                           Text(
-                            _balanceAfter ?? '',
+                            _balanceAfter!,
                             style: GoogleFonts.inter(
                               fontSize: 16,
                               fontWeight: FontWeight.w400,
@@ -205,11 +259,12 @@ class _DeductPageState extends State<DeductPage> {
                             ),
                           ),
                         const SizedBox(height: 32),
-                        // Category Dropdown
+
+                        // Category Selection
                         Align(
                           alignment: Alignment.centerLeft,
                           child: Text(
-                            'Select a category',
+                            'Select Category',
                             style: GoogleFonts.inter(
                               fontSize: 16,
                               fontWeight: FontWeight.w400,
@@ -222,6 +277,7 @@ class _DeductPageState extends State<DeductPage> {
                           onPressed: () {
                             setState(() {
                               _showCategories = !_showCategories;
+                              _showAddCategory = false;
                             });
                           },
                           style: OutlinedButton.styleFrom(
@@ -232,12 +288,13 @@ class _DeductPageState extends State<DeductPage> {
                             mainAxisAlignment: MainAxisAlignment.spaceBetween,
                             children: [
                               Text(
-                                _selectedCategory ?? 'Categories',
+                                _selectedCategory ?? 'Select Category',
                                 style: GoogleFonts.inter(
                                   fontSize: 16,
-                                  color: _selectedCategory != null
-                                      ? Colors.black
-                                      : Colors.grey,
+                                  color:
+                                      _selectedCategory != null
+                                          ? Colors.black
+                                          : Colors.grey,
                                 ),
                               ),
                               Icon(
@@ -268,18 +325,59 @@ class _DeductPageState extends State<DeductPage> {
                                     const Icon(Icons.add, size: 18),
                                     const SizedBox(width: 8),
                                     Text(
-                                      'Add Category',
+                                      'Add New Category',
                                       style: GoogleFonts.inter(),
                                     ),
                                   ],
                                 ),
                                 onTap: () {
-                                  // Implement add category functionality
+                                  setState(() {
+                                    _showCategories = false;
+                                    _showAddCategory = true;
+                                  });
                                 },
                               ),
                             ],
                           ),
+                        if (_showAddCategory)
+                          Padding(
+                            padding: const EdgeInsets.only(top: 16.0),
+                            child: Column(
+                              children: [
+                                TextFormField(
+                                  controller: _newCategoryController,
+                                  decoration: InputDecoration(
+                                    labelText: 'New Category Name',
+                                    border: OutlineInputBorder(),
+                                  ),
+                                ),
+                                const SizedBox(height: 16),
+                                Row(
+                                  children: [
+                                    Expanded(
+                                      child: OutlinedButton(
+                                        onPressed: () {
+                                          setState(() {
+                                            _showAddCategory = false;
+                                          });
+                                        },
+                                        child: Text('Cancel'),
+                                      ),
+                                    ),
+                                    const SizedBox(width: 16),
+                                    Expanded(
+                                      child: ElevatedButton(
+                                        onPressed: _addNewCategory,
+                                        child: Text('Add'),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ],
+                            ),
+                          ),
                         const SizedBox(height: 32),
+
                         // Description Input
                         TextFormField(
                           controller: _descriptionController,
@@ -326,6 +424,7 @@ class _DeductPageState extends State<DeductPage> {
                           minLines: 3,
                         ),
                         const SizedBox(height: 32),
+
                         // Confirm Button
                         SizedBox(
                           width: double.infinity,

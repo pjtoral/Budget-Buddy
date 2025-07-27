@@ -2,41 +2,49 @@ import 'package:budgetbuddy_project/common/app_strings.dart';
 import 'package:budgetbuddy_project/common/string_helpers.dart';
 import 'package:budgetbuddy_project/screens/home_page/deduct.dart';
 import 'package:budgetbuddy_project/screens/home_page/topup.dart';
+import 'package:budgetbuddy_project/screens/home_page/transaction_page.dart';
+import 'package:budgetbuddy_project/services/balance_service.dart';
+import 'package:budgetbuddy_project/services/service_locator.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:fl_chart/fl_chart.dart';
 
 class HomePage extends StatefulWidget {
-  const HomePage({super.key});
+  final VoidCallback onSeeMoreTap;
+  final VoidCallback onAnalyticsTap;
+  const HomePage({
+    super.key,
+    required this.onSeeMoreTap,
+    required this.onAnalyticsTap,
+  });
 
   @override
   State<HomePage> createState() => _HomePageState();
 }
 
 class _HomePageState extends State<HomePage> {
-  final TextEditingController _amountController = TextEditingController();
-
   double _currentBalanceHome = 0.0;
-  String? _balanceAfter;
-
 
   @override
   void initState() {
     super.initState();
-    _currentBalanceHome = currentBalance;
+    _loadBalance;
   }
 
-  Future<void> _updateBalance() async {
-    final amount = double.tryParse(_amountController.text);
-    if(amount != null) {
-      setState(() {
-        _balanceAfter = 'Balance after: ₱${(_currentBalanceHome + amount).toStringAsFixed(2)}';
-      });
-    } else {
-      setState(() {
-        _balanceAfter = null;
-      });
-    }
+  Future<void> _loadBalance() async {
+    final balanceService = locator<BalanceService>();
+    final balance = await balanceService.getBalance();
+    setState(() {
+      _currentBalanceHome = balance;
+    });
+  }
+
+  Future<void> _onTopUp(double amount) async {
+    await _loadBalance(); // reload after topup
+  }
+
+  Future<void> _onDeduct(double amount) async {
+    await _loadBalance(); // reload after deduct
   }
 
   final List<Map<String, dynamic>> transactionSummaries = [
@@ -148,159 +156,175 @@ class _HomePageState extends State<HomePage> {
                 ),
               ),
               // Balance Card
-              Container(
-                width: double.infinity,
-                margin: EdgeInsets.all(screenWidth * 0.04),
-                padding: EdgeInsets.symmetric(
-                  horizontal: screenWidth * 0.04,
-                  vertical: screenHeight * 0.02,
-                ),
-                decoration: BoxDecoration(
-                  color: Color(0xFFFFFFFF),
-                  border: Border.all(
-                    width: 1.0,
-                    color: const Color(0xEEE0E0E0),
-                  ),
-                  borderRadius: BorderRadius.circular(screenWidth * 0.1),
-                ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      'Current Balance',
-                      style: GoogleFonts.inter(
-                        color: Colors.black,
-                        fontSize: screenWidth * 0.04,
+              FutureBuilder<double>(
+                future: locator<BalanceService>().getBalance(),
+                builder: (context, snapshot) {
+                  if (snapshot.connectionState == ConnectionState.waiting) {
+                    return Center(child: CircularProgressIndicator());
+                  } else if (snapshot.hasError) {
+                    return Center(child: Text('Error loading balance'));
+                  } else {
+                    final balance = snapshot.data ?? 0.0;
+                    return Container(
+                      width: double.infinity,
+                      margin: EdgeInsets.all(screenWidth * 0.04),
+                      padding: EdgeInsets.symmetric(
+                        horizontal: screenWidth * 0.04,
+                        vertical: screenHeight * 0.02,
                       ),
-                    ),
-                    SizedBox(height: screenHeight * 0.012),
-                    Text(
-                      _currentBalanceHome > 10000000
-                          ? 'you are too rich for this app </3'
-                          : formatMoney(_currentBalanceHome),
-                      style: GoogleFonts.inter(
-                        color: Colors.black,
-                        fontSize: screenWidth * 0.09,
-                        fontWeight: FontWeight.w600,
+                      decoration: BoxDecoration(
+                        color: Color(0xFFFFFFFF),
+                        border: Border.all(
+                          width: 1.0,
+                          color: const Color(0xEEE0E0E0),
+                        ),
+                        borderRadius: BorderRadius.circular(screenWidth * 0.1),
                       ),
-                    ),
-                    SizedBox(height: screenHeight * 0.025),
-                    //Add and Deduct Buttons
-                    Row(
-                      children: [
-                        // Add Button
-                        Expanded(
-                          child: GestureDetector(
-                            onTap: () {
-                              Navigator.push(
-                                context,
-                                MaterialPageRoute(
-                                  builder:
-                                      (context) =>
-                                          TopUpPage(onConfirm: _updateBalance),
-                                ),
-                              );
-                            },
-                            child: Container(
-                              height: screenHeight * 0.07,
-                              margin: EdgeInsets.only(
-                                right: screenWidth * 0.02,
-                              ),
-                              decoration: BoxDecoration(
-                                color: Colors.black,
-                                borderRadius: BorderRadius.circular(
-                                  screenHeight * 0.035,
-                                ),
-                              ),
-                              child: Row(
-                                mainAxisAlignment: MainAxisAlignment.start,
-                                children: [
-                                  SizedBox(width: screenWidth * 0.045),
-                                  Container(
-                                    width: screenWidth * 0.09,
-                                    height: screenWidth * 0.09,
-                                    decoration: BoxDecoration(
-                                      color: Colors.white,
-                                      shape: BoxShape.circle,
-                                    ),
-                                    child: Icon(
-                                      Icons.add,
-                                      color: Colors.black,
-                                      size: screenWidth * 0.06,
-                                    ),
-                                  ),
-                                  SizedBox(width: screenWidth * 0.03),
-                                  Text(
-                                    'Add',
-                                    style: GoogleFonts.inter(
-                                      color: Colors.white,
-                                      fontSize: screenWidth * 0.045,
-                                      fontWeight: FontWeight.w500,
-                                    ),
-                                  ),
-                                ],
-                              ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'Current Balance',
+                            style: GoogleFonts.inter(
+                              color: Colors.black,
+                              fontSize: screenWidth * 0.04,
                             ),
                           ),
-                        ),
-                        SizedBox(width: screenWidth * 0.04),
-                        // Deduct Button
-                        Expanded(
-                          child: GestureDetector(
-                            onTap: () {
-                              Navigator.push(
-                                context,
-                                MaterialPageRoute(
-                                  builder:
-                                      (context) =>
-                                          DeductPage(onConfirm: _updateBalance),
-                                ),
-                              );
-                            },
-                            child: Container(
-                              height: screenHeight * 0.07,
-                              margin: EdgeInsets.only(left: screenWidth * 0.02),
-                              decoration: BoxDecoration(
-                                color: Colors.black,
-                                borderRadius: BorderRadius.circular(
-                                  screenHeight * 0.035,
-                                ),
-                              ),
-                              child: Row(
-                                mainAxisAlignment: MainAxisAlignment.start,
-                                children: [
-                                  SizedBox(width: screenWidth * 0.045),
-                                  Container(
-                                    width: screenWidth * 0.09,
-                                    height: screenWidth * 0.09,
-                                    decoration: BoxDecoration(
-                                      color: Colors.white,
-                                      shape: BoxShape.circle,
-                                    ),
-                                    child: Icon(
-                                      Icons.remove,
-                                      color: Colors.black,
-                                      size: screenWidth * 0.06,
-                                    ),
-                                  ),
-                                  SizedBox(width: screenWidth * 0.03),
-                                  Text(
-                                    'Deduct',
-                                    style: GoogleFonts.inter(
-                                      color: Colors.white,
-                                      fontSize: screenWidth * 0.045,
-                                      fontWeight: FontWeight.w500,
-                                    ),
-                                  ),
-                                ],
-                              ),
+                          SizedBox(height: screenHeight * 0.012),
+                          Text(
+                            balance > 10000000
+                                ? 'you are too rich for this app </3'
+                                : formatMoney(balance),
+                            style: GoogleFonts.inter(
+                              color: Colors.black,
+                              fontSize: screenWidth * 0.09,
+                              fontWeight: FontWeight.w600,
                             ),
                           ),
-                        ),
-                      ],
-                    ),
-                  ],
-                ),
+                          SizedBox(height: screenHeight * 0.025),
+                          // Add and Deduct Buttons
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              // Add Button
+                              Expanded(
+                                child: GestureDetector(
+                                  onTap: () {
+                                    Navigator.push(
+                                      context,
+                                      MaterialPageRoute(
+                                        builder:
+                                            (context) => TopUpPage(
+                                              onConfirm: (double amount) async {
+                                                await _onTopUp(amount);
+                                              },
+                                            ),
+                                      ),
+                                    );
+                                  },
+                                  child: Container(
+                                    height: screenHeight * 0.07,
+                                    decoration: BoxDecoration(
+                                      color: Colors.black,
+                                      borderRadius: BorderRadius.circular(
+                                        screenHeight * 0.035,
+                                      ),
+                                    ),
+                                    child: Row(
+                                      mainAxisAlignment:
+                                          MainAxisAlignment.start,
+                                      children: [
+                                        SizedBox(width: screenWidth * 0.04),
+                                        Container(
+                                          width: screenWidth * 0.09,
+                                          height: screenWidth * 0.09,
+                                          decoration: const BoxDecoration(
+                                            color: Colors.white,
+                                            shape: BoxShape.circle,
+                                          ),
+                                          child: Icon(
+                                            Icons.add,
+                                            color: Colors.black,
+                                            size: screenWidth * 0.06,
+                                          ),
+                                        ),
+                                        SizedBox(width: screenWidth * 0.03),
+                                        Text(
+                                          'Add',
+                                          style: GoogleFonts.inter(
+                                            color: Colors.white,
+                                            fontSize: screenWidth * 0.045,
+                                            fontWeight: FontWeight.w500,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                ),
+                              ),
+                              SizedBox(width: screenWidth * 0.04),
+                              // Deduct Button
+                              Expanded(
+                                child: GestureDetector(
+                                  onTap: () {
+                                    Navigator.push(
+                                      context,
+                                      MaterialPageRoute(
+                                        builder:
+                                            (context) => DeductPage(
+                                              onConfirm: (double amount) async {
+                                                await _onDeduct(amount);
+                                              },
+                                            ),
+                                      ),
+                                    );
+                                  },
+                                  child: Container(
+                                    height: screenHeight * 0.07,
+                                    decoration: BoxDecoration(
+                                      color: Colors.black,
+                                      borderRadius: BorderRadius.circular(
+                                        screenHeight * 0.035,
+                                      ),
+                                    ),
+                                    child: Row(
+                                      mainAxisAlignment:
+                                          MainAxisAlignment.center,
+                                      children: [
+                                        Container(
+                                          width: screenWidth * 0.09,
+                                          height: screenWidth * 0.09,
+                                          decoration: const BoxDecoration(
+                                            color: Colors.white,
+                                            shape: BoxShape.circle,
+                                          ),
+                                          child: Icon(
+                                            Icons.remove,
+                                            color: Colors.black,
+                                            size: screenWidth * 0.06,
+                                          ),
+                                        ),
+                                        SizedBox(width: screenWidth * 0.03),
+                                        Text(
+                                          'Deduct',
+                                          style: GoogleFonts.inter(
+                                            color: Colors.white,
+                                            fontSize: screenWidth * 0.045,
+                                            fontWeight: FontWeight.w500,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ],
+                      ),
+                    );
+                  }
+                },
               ),
               // Transactions Summary
               Container(
@@ -327,14 +351,9 @@ class _HomePageState extends State<HomePage> {
                           ),
                         ),
                         GestureDetector(
-                          onTap: () {
-                            // Navigator.push(
-                            //   context,
-                            //   MaterialPageRoute(
-                            //     builder: (context) => HomePage(),
-                            //   ),
-                            // );
-                          },
+                          onTap:
+                              widget
+                                  .onSeeMoreTap, // Use widget.onSeeMoreTap instead of onSeeMoreTap
                           child: Text(
                             'See More',
                             style: GoogleFonts.inter(
@@ -399,14 +418,14 @@ class _HomePageState extends State<HomePage> {
                   ],
                 ),
               ),
-              //Graph Card
+              // Graph Card
               Container(
                 margin: EdgeInsets.all(screenWidth * 0.04),
                 padding: EdgeInsets.all(screenWidth * 0.04),
                 decoration: BoxDecoration(
                   color: Colors.white,
                   borderRadius: BorderRadius.circular(screenWidth * 0.07),
-                  border: Border.all(color: Color(0xFFE0E0E0)),
+                  border: Border.all(color: const Color(0xFFE0E0E0)),
                 ),
                 child: Column(
                   children: [
@@ -421,12 +440,16 @@ class _HomePageState extends State<HomePage> {
                             fontSize: screenWidth * 0.04,
                           ),
                         ),
-                        Text(
-                          'See More',
-                          style: GoogleFonts.inter(
-                            color: Colors.grey[600],
-                            fontSize: screenWidth * 0.03,
-                            fontWeight: FontWeight.w500,
+                        GestureDetector(
+                          onTap: widget.onAnalyticsTap, // Use the callback here
+                          child: Text(
+                            'See More',
+                            style: GoogleFonts.inter(
+                              color: Colors.grey[600],
+                              fontSize: screenWidth * 0.03,
+                              fontWeight: FontWeight.w500,
+                              decoration: TextDecoration.underline,
+                            ),
                           ),
                         ),
                       ],

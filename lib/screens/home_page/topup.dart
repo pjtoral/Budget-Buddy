@@ -9,7 +9,7 @@ import 'dart:convert';
 
 class TopUpPage extends StatefulWidget {
   const TopUpPage({super.key, required this.onConfirm});
-  final Function onConfirm;
+  final Function(double) onConfirm;
   @override
   State<TopUpPage> createState() => _TopUpPageState();
 }
@@ -17,17 +17,18 @@ class TopUpPage extends StatefulWidget {
 class _TopUpPageState extends State<TopUpPage> {
   final TextEditingController _amountController = TextEditingController();
   final TextEditingController _newCategoryController = TextEditingController();
-  
-  final BalanceService _balanceService = locator<BalanceService>();
-  final TransactionServices _transactionServices = locator<TransactionServices>();
-  final LocalStorageService _localStorageService = locator<LocalStorageService>();
 
+  final BalanceService _balanceService = locator<BalanceService>();
+  final TransactionServices _transactionServices =
+      locator<TransactionServices>();
+  final LocalStorageService _localStorageService =
+      locator<LocalStorageService>();
 
   String? _balanceAfter;
   String? _selectedCategory;
   bool _showCategories = false;
   bool _showAddCategory = false;
-  List<String> _categories = ['School', 'Motorcycle', 'Computer', 'Shabu'];
+  List<String> _categories = ['School', 'Motorcycle', 'Computer'];
   double _currentBalance = 0;
 
   @override
@@ -36,20 +37,20 @@ class _TopUpPageState extends State<TopUpPage> {
     _loadInitialData();
   }
 
-
   Future<void> _loadInitialData() async {
     _currentBalance = await _balanceService.getBalance();
     final categories = locator<LocalStorageService>().getCategories();
     if (categories != null) {
-      setState(() => _categories = categories);  
+      setState(() => _categories = categories);
     }
   }
 
   Future<void> _updateBalance() async {
     final amount = double.tryParse(_amountController.text);
-    if(amount != null) {
+    if (amount != null) {
       setState(() {
-        _balanceAfter = 'Balance after: ₱${(_currentBalance + amount).toStringAsFixed(2)}';
+        _balanceAfter =
+            'Balance after: ₱${(_currentBalance + amount).toStringAsFixed(2)}';
       });
     } else {
       setState(() {
@@ -61,16 +62,16 @@ class _TopUpPageState extends State<TopUpPage> {
   Future<void> _confirmTopUp() async {
     final amount = double.tryParse(_amountController.text);
     if (amount == null || amount <= 0) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Enter a valid amount')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('Enter a valid amount')));
       return;
     }
 
     if (_selectedCategory == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Please select a category')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('Please select a category')));
       return;
     }
 
@@ -83,21 +84,20 @@ class _TopUpPageState extends State<TopUpPage> {
 
     await _transactionServices.addTransaction(transaction);
     await _balanceService.updateBalance(amount);
-    
-    widget.onConfirm();
+
+    widget.onConfirm(amount);
     Navigator.of(context).pop();
   }
 
-
   Future<void> _saveCategories() async {
     await locator<LocalStorageService>().setString(
-      'categories', 
-      jsonEncode(_categories)
+      'categories',
+      jsonEncode(_categories),
     );
   }
 
   void _addNewCategory() {
-    if(_newCategoryController.text.isNotEmpty) {
+    if (_newCategoryController.text.isNotEmpty) {
       setState(() {
         _categories.add(_newCategoryController.text);
         _selectedCategory = _newCategoryController.text;
@@ -177,35 +177,66 @@ class _TopUpPageState extends State<TopUpPage> {
                           ),
                         ),
                         const SizedBox(height: 12),
-                        TextFormField(
-                          controller: _amountController,
-                          textAlign: TextAlign.center,
-                          style: GoogleFonts.inter(
-                            fontSize: 32,
-                            fontWeight: FontWeight.w700,
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 16,
+                            vertical: 8,
                           ),
-                          decoration: InputDecoration(
-                            prefixText: '₱ ',
-                            prefixStyle: GoogleFonts.inter(
-                              fontSize: 32,
-                              fontWeight: FontWeight.w500,
-                              color: Colors.black,
+                          decoration: BoxDecoration(
+                            color:
+                                Colors
+                                    .grey[100], // Light background for better contrast
+                            borderRadius: BorderRadius.circular(
+                              12,
+                            ), // Rounded corners
+                            border: Border.all(
+                              color: Colors.grey[300]!, // Subtle border color
+                              width: 1.5,
                             ),
-                            hintText: '0.00',
-                            hintStyle: GoogleFonts.inter(
-                              fontSize: 32,
-                              fontWeight: FontWeight.w700,
-                              color: Colors.grey[400],
-                            ),
-                            border: InputBorder.none,
-                            filled: true,
-                            fillColor: Colors.transparent,
-                            contentPadding: EdgeInsets.zero,
                           ),
-                          keyboardType: TextInputType.numberWithOptions(
-                            decimal: true,
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            crossAxisAlignment: CrossAxisAlignment.center,
+                            children: [
+                              Text(
+                                '₱',
+                                style: GoogleFonts.inter(
+                                  fontSize: 32,
+                                  fontWeight: FontWeight.w600,
+                                  color: Colors.black,
+                                ),
+                              ),
+                              const SizedBox(width: 8),
+                              Expanded(
+                                child: TextFormField(
+                                  controller: _amountController,
+                                  textAlign: TextAlign.center,
+                                  style: GoogleFonts.inter(
+                                    fontSize: 32,
+                                    fontWeight: FontWeight.w700,
+                                    color: Colors.black,
+                                  ),
+                                  decoration: InputDecoration(
+                                    hintText: '0.00',
+                                    hintStyle: GoogleFonts.inter(
+                                      fontSize: 32,
+                                      fontWeight: FontWeight.w700,
+                                      color: Colors.grey[400],
+                                    ),
+                                    border:
+                                        InputBorder
+                                            .none, // Remove default underline
+                                    contentPadding:
+                                        EdgeInsets.zero, // Remove extra padding
+                                  ),
+                                  keyboardType: TextInputType.numberWithOptions(
+                                    decimal: true,
+                                  ),
+                                  onChanged: (value) => _updateBalance(),
+                                ),
+                              ),
+                            ],
                           ),
-                          onChanged: (value) => _updateBalance(),
                         ),
                         const SizedBox(height: 8),
                         // Balance After
@@ -251,9 +282,10 @@ class _TopUpPageState extends State<TopUpPage> {
                                 _selectedCategory ?? 'Select Category',
                                 style: GoogleFonts.inter(
                                   fontSize: 16,
-                                  color: _selectedCategory != null
-                                      ? Colors.black
-                                      : Colors.grey,
+                                  color:
+                                      _selectedCategory != null
+                                          ? Colors.black
+                                          : Colors.grey,
                                 ),
                               ),
                               Icon(

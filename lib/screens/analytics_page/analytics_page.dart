@@ -1,3 +1,5 @@
+import 'package:budgetbuddy_project/services/local_storage_service.dart';
+import 'package:budgetbuddy_project/services/service_locator.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:fl_chart/fl_chart.dart';
@@ -19,15 +21,21 @@ class GraphReportScreen extends StatefulWidget {
 }
 
 class _GraphReportScreenState extends State<GraphReportScreen> {
-  final List<String> categories = ['School', 'Motorcycle', 'Computer', 'Shabu'];
-  int selectedCategory = 1; // Motorcycle by default
+  final LocalStorageService _localStorageService =
+      locator<LocalStorageService>();
 
-  // Example data for each category
+  List<String> categories = [
+    'School',
+    'Motorcycle',
+    'Computer',
+  ]; // Changed to non-final
+  int selectedCategory = 0; // Changed to 0 (first category)
+
+  // Example data for each category (you can expand this dynamically)
   final Map<String, List<double>> categoryAmounts = {
     'School': [2000, 3000, 2500, 4000, 3500, 4200, 3100],
     'Motorcycle': [3000, 4000, 2000, 6000, 2500, 7200, 4500],
     'Computer': [1000, 2000, 1500, 3000, 2500, 3200, 2100],
-    'Shabu': [500, 800, 600, 1200, 900, 1500, 1100],
   };
 
   final List<String> days = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
@@ -44,9 +52,34 @@ class _GraphReportScreenState extends State<GraphReportScreen> {
   int highlightIndex = 3; // Thursday
 
   @override
+  void initState() {
+    super.initState();
+    _loadCategories();
+  }
+
+  Future<void> _loadCategories() async {
+    final cats = _localStorageService.getCategories();
+    if (cats != null && cats.isNotEmpty) {
+      setState(() {
+        categories = cats;
+        // Reset selected category if it's out of bounds
+        if (selectedCategory >= categories.length) {
+          selectedCategory = 0;
+        }
+      });
+    }
+  }
+
+  // Get amounts for a category, with default values for new categories
+  List<double> _getAmountsForCategory(String category) {
+    return categoryAmounts[category] ??
+        [0, 0, 0, 0, 0, 0, 0]; // Default empty week
+  }
+
+  @override
   Widget build(BuildContext context) {
     String currentCategory = categories[selectedCategory];
-    List<double> amounts = categoryAmounts[currentCategory]!;
+    List<double> amounts = _getAmountsForCategory(currentCategory);
 
     // Responsive width and height
     double screenWidth = MediaQuery.of(context).size.width;
@@ -59,7 +92,7 @@ class _GraphReportScreenState extends State<GraphReportScreen> {
         elevation: 0,
         centerTitle: true,
         title: Text(
-          'Spending Report',
+          'Expenses Summary',
           style: GoogleFonts.inter(
             color: Colors.black,
             fontSize: 18.0,
@@ -126,7 +159,7 @@ class _GraphReportScreenState extends State<GraphReportScreen> {
               child: Column(
                 children: [
                   Text(
-                    '${categories[selectedCategory]} Spendings',
+                    '${categories[selectedCategory]} Expenses',
                     style: GoogleFonts.inter(
                       fontWeight: FontWeight.bold,
                       fontSize: 22,
@@ -142,7 +175,7 @@ class _GraphReportScreenState extends State<GraphReportScreen> {
                   ),
                   const SizedBox(height: 24),
                   SizedBox(
-                    height: screenHeight * 0.35, // Make the graph taller
+                    height: screenHeight * 0.45, // Make the graph taller
                     width: double.infinity,
                     child: BarChart(
                       BarChartData(
@@ -184,6 +217,7 @@ class _GraphReportScreenState extends State<GraphReportScreen> {
                           bottomTitles: AxisTitles(
                             sideTitles: SideTitles(
                               showTitles: true,
+                              reservedSize: 40,
                               getTitlesWidget: (value, meta) {
                                 int idx = value.toInt();
                                 if (idx < 0 || idx >= days.length) {

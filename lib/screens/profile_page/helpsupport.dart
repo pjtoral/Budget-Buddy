@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:budgetbuddy_project/services/service_locator.dart';
+import 'package:budgetbuddy_project/services/local_storage_service.dart';
 
 class HelpSupportPage extends StatelessWidget {
   const HelpSupportPage({super.key});
@@ -46,11 +48,13 @@ class HelpSupportPage extends StatelessWidget {
                   SizedBox(height: 12),
                   _faqItem(
                     question: 'How do I add a new task?',
-                    answer: 'Tap the "+" button on the home screen to add a new task.',
+                    answer:
+                        'Tap the "+" button on the home screen to add a new task.',
                   ),
                   _faqItem(
                     question: 'How do I mark a task as completed?',
-                    answer: 'Change its status to "Completed" from the task card.',
+                    answer:
+                        'Change its status to "Completed" from the task card.',
                   ),
                   _faqItem(
                     question: 'Can I edit or delete a task?',
@@ -75,6 +79,29 @@ class HelpSupportPage extends StatelessWidget {
                 ],
               ),
             ),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 0),
+              child: ElevatedButton.icon(
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.red,
+                  foregroundColor: Colors.white,
+                  minimumSize: Size(double.infinity, 48),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                ),
+                icon: Icon(Icons.delete_forever),
+                label: Text('Reset Local Storage'),
+                onPressed: () async {
+                  await locator<LocalStorageService>().clearAll();
+                  if (context.mounted) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(content: Text('Local storage cleared!')),
+                    );
+                  }
+                },
+              ),
+            ),
           ],
         ),
       ),
@@ -89,13 +116,13 @@ class HelpSupportPage extends StatelessWidget {
         children: [
           Text(
             question,
-            style: TextStyle(fontWeight: FontWeight.w600, color: Colors.black87),
+            style: TextStyle(
+              fontWeight: FontWeight.w600,
+              color: Colors.black87,
+            ),
           ),
           SizedBox(height: 4),
-          Text(
-            answer,
-            style: TextStyle(color: Colors.black54),
-          ),
+          Text(answer, style: TextStyle(color: Colors.black54)),
         ],
       ),
     );
