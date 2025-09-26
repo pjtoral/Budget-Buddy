@@ -1,8 +1,6 @@
-import 'package:budgetbuddy_project/common/app_strings.dart';
 import 'package:budgetbuddy_project/common/string_helpers.dart';
 import 'package:budgetbuddy_project/screens/home_page/deduct.dart';
 import 'package:budgetbuddy_project/screens/home_page/topup.dart';
-import 'package:budgetbuddy_project/screens/home_page/transaction_page.dart';
 import 'package:budgetbuddy_project/services/balance_service.dart';
 import 'package:budgetbuddy_project/services/service_locator.dart';
 import 'package:flutter/material.dart';
