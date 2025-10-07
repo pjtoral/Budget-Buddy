@@ -3,6 +3,9 @@ import 'package:budgetbuddy_project/screens/home_page/deduct.dart';
 import 'package:budgetbuddy_project/screens/home_page/topup.dart';
 import 'package:budgetbuddy_project/services/balance_service.dart';
 import 'package:budgetbuddy_project/services/service_locator.dart';
+import 'package:budgetbuddy_project/services/transaction_services.dart';
+import 'package:budgetbuddy_project/services/local_storage_service.dart';
+import 'package:budgetbuddy_project/models/transaction_model.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:fl_chart/fl_chart.dart';
@@ -10,6 +13,7 @@ import 'package:fl_chart/fl_chart.dart';
 class HomePage extends StatefulWidget {
   final VoidCallback onSeeMoreTap;
   final VoidCallback onAnalyticsTap;
+
   const HomePage({
     super.key,
     required this.onSeeMoreTap,
@@ -20,13 +24,31 @@ class HomePage extends StatefulWidget {
   State<HomePage> createState() => _HomePageState();
 }
 
-class _HomePageState extends State<HomePage> {
+class _HomePageState extends State<HomePage> with AutomaticKeepAliveClientMixin {
+  final TransactionServices _transactionservices = locator<TransactionServices>();
   double _currentBalanceHome = 0.0;
+  List<Map<String, dynamic>> _transactionSummaries = [];
+
+  @override
+  bool get wantKeepAlive => false; // Don't keep state alive
 
   @override
   void initState() {
     super.initState();
-    _loadBalance;
+    _loadBalance(); // Fixed: Added parentheses
+    _loadTransactionSummaries();
+  }
+
+  // Add this to reload data when page becomes visible
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    _refreshData();
+  }
+
+  Future<void> _refreshData() async {
+    await _loadBalance();
+    await _loadTransactionSummaries();
   }
 
   Future<void> _loadBalance() async {
@@ -38,39 +60,95 @@ class _HomePageState extends State<HomePage> {
   }
 
   Future<void> _onTopUp(double amount) async {
-    await _loadBalance(); // reload after topup
+    await _loadBalance();
+    await _loadTransactionSummaries();
   }
 
   Future<void> _onDeduct(double amount) async {
-    await _loadBalance(); // reload after deduct
+    await _loadBalance();
+    await _loadTransactionSummaries();
   }
 
-  final List<Map<String, dynamic>> transactionSummaries = [
-    {
-      'title': 'This Week',
-      'amount': '+₱5,433.52',
-      'amountColor': Colors.green,
-      'subtitle': '+20% month over month',
-    },
-    {
-      'title': 'Last Week',
-      'amount': '-₱2,409',
-      'amountColor': Colors.red,
-      'subtitle': '+33% month over month',
-    },
-    {
-      'title': 'This Month',
-      'amount': '+₱12,000.00',
-      'amountColor': Colors.green,
-      'subtitle': '+10% month over month',
-    },
-    {
-      'title': 'Last Month',
-      'amount': '-₱8,500.00',
-      'amountColor': Colors.red,
-      'subtitle': '+5% month over month',
-    },
-  ];
+  Future<void> _loadTransactionSummaries() async {
+    // Get all transactions from all categories
+    final allTransactions = <TransactionModel>[];
+    final userCategories = locator<LocalStorageService>().getCategories();
+    
+    if (userCategories != null && userCategories.isNotEmpty) {
+      for (final category in userCategories) {
+        final categoryTransactions = await _transactionservices
+            .getTransactionByCategory(category);
+        allTransactions.addAll(categoryTransactions);
+      }
+    }
+    
+    final transactions = allTransactions;
+    final now = DateTime.now();
+
+    double thisWeekTotal = 0;
+    double lastWeekTotal = 0;
+    double thisMonthTotal = 0;
+    double lastMonthTotal = 0;
+
+    for (var tx in transactions) {
+      final date = tx.date;
+      final amount = tx.amount;
+
+      final currentWeek = DateTime(now.year, now.month, now.day - now.weekday + 1);
+      final lastWeekStart = currentWeek.subtract(const Duration(days: 7));
+      final lastWeekEnd = currentWeek.subtract(const Duration(days: 1));
+
+      // this week
+      if (date.isAfter(currentWeek.subtract(const Duration(days: 1)))) {
+        thisWeekTotal += amount;
+      }
+      // last week
+      else if (date.isAfter(lastWeekStart.subtract(const Duration(days: 1))) &&
+          date.isBefore(lastWeekEnd.add(const Duration(days: 1)))) {
+        lastWeekTotal += amount;
+      }
+
+      // this month
+      if (date.year == now.year && date.month == now.month) {
+        thisMonthTotal += amount;
+      }
+
+      // last month
+      final lastMonth = DateTime(now.year, now.month - 1);
+      if (date.year == lastMonth.year && date.month == lastMonth.month) {
+        lastMonthTotal += amount;
+      }
+    }
+
+    setState(() {
+      _transactionSummaries = [
+        {
+          'title': 'This Week',
+          'amount': formatMoney(thisWeekTotal),
+          'amountColor': thisWeekTotal >= 0 ? Colors.green : Colors.red,
+          'subtitle': 'vs last week',
+        },
+        {
+          'title': 'Last Week',
+          'amount': formatMoney(lastWeekTotal),
+          'amountColor': lastWeekTotal >= 0 ? Colors.green : Colors.red,
+          'subtitle': '',
+        },
+        {
+          'title': 'This Month',
+          'amount': formatMoney(thisMonthTotal),
+          'amountColor': thisMonthTotal >= 0 ? Colors.green : Colors.red,
+          'subtitle': 'vs last month',
+        },
+        {
+          'title': 'Last Month',
+          'amount': formatMoney(lastMonthTotal),
+          'amountColor': lastMonthTotal >= 0 ? Colors.green : Colors.red,
+          'subtitle': '',
+        },
+      ];
+    });
+  }
 
   // For the graph
   final List<double> amounts = [3000, 4000, 2000, 6000, 2500, 7200, 4500];
@@ -85,10 +163,11 @@ class _HomePageState extends State<HomePage> {
     'June 8, 2025',
   ];
 
-  int highlightIndex = 3; // Thursday
+  int highlightIndex = 3;
 
   @override
   Widget build(BuildContext context) {
+    super.build(context); // Required for AutomaticKeepAliveClientMixin
     final screenWidth = MediaQuery.of(context).size.width;
     final screenHeight = MediaQuery.of(context).size.height;
 
@@ -207,18 +286,19 @@ class _HomePageState extends State<HomePage> {
                               // Add Button
                               Expanded(
                                 child: GestureDetector(
-                                  onTap: () {
-                                    Navigator.push(
+                                  onTap: () async {
+                                    await Navigator.push(
                                       context,
                                       MaterialPageRoute(
-                                        builder:
-                                            (context) => TopUpPage(
-                                              onConfirm: (double amount) async {
-                                                await _onTopUp(amount);
-                                              },
-                                            ),
+                                        builder: (context) => TopUpPage(
+                                          onConfirm: (double amount) async {
+                                            await _onTopUp(amount);
+                                          },
+                                        ),
                                       ),
                                     );
+                                    // Refresh data when returning
+                                    await _refreshData();
                                   },
                                   child: Container(
                                     height: screenHeight * 0.07,
@@ -229,8 +309,7 @@ class _HomePageState extends State<HomePage> {
                                       ),
                                     ),
                                     child: Row(
-                                      mainAxisAlignment:
-                                          MainAxisAlignment.start,
+                                      mainAxisAlignment: MainAxisAlignment.start,
                                       children: [
                                         SizedBox(width: screenWidth * 0.04),
                                         Container(
@@ -264,18 +343,19 @@ class _HomePageState extends State<HomePage> {
                               // Deduct Button
                               Expanded(
                                 child: GestureDetector(
-                                  onTap: () {
-                                    Navigator.push(
+                                  onTap: () async {
+                                    await Navigator.push(
                                       context,
                                       MaterialPageRoute(
-                                        builder:
-                                            (context) => DeductPage(
-                                              onConfirm: (double amount) async {
-                                                await _onDeduct(amount);
-                                              },
-                                            ),
+                                        builder: (context) => DeductPage(
+                                          onConfirm: (double amount) async {
+                                            await _onDeduct(amount);
+                                          },
+                                        ),
                                       ),
                                     );
+                                    // Refresh data when returning
+                                    await _refreshData();
                                   },
                                   child: Container(
                                     height: screenHeight * 0.07,
@@ -286,8 +366,7 @@ class _HomePageState extends State<HomePage> {
                                       ),
                                     ),
                                     child: Row(
-                                      mainAxisAlignment:
-                                          MainAxisAlignment.center,
+                                      mainAxisAlignment: MainAxisAlignment.center,
                                       children: [
                                         Container(
                                           width: screenWidth * 0.09,
@@ -349,9 +428,7 @@ class _HomePageState extends State<HomePage> {
                           ),
                         ),
                         GestureDetector(
-                          onTap:
-                              widget
-                                  .onSeeMoreTap, // Use widget.onSeeMoreTap instead of onSeeMoreTap
+                          onTap: widget.onSeeMoreTap,
                           child: Text(
                             'See More',
                             style: GoogleFonts.inter(
@@ -368,49 +445,48 @@ class _HomePageState extends State<HomePage> {
                     SingleChildScrollView(
                       scrollDirection: Axis.horizontal,
                       child: Row(
-                        children:
-                            transactionSummaries.map((summary) {
-                              return Container(
-                                margin: EdgeInsets.only(
-                                  right: screenWidth * 0.03,
-                                ),
-                                padding: EdgeInsets.all(screenWidth * 0.03),
-                                decoration: BoxDecoration(
-                                  color: Colors.white,
-                                  borderRadius: BorderRadius.circular(
-                                    screenWidth * 0.03,
+                        children: _transactionSummaries.map((summary) {
+                          return Container(
+                            margin: EdgeInsets.only(
+                              right: screenWidth * 0.03,
+                            ),
+                            padding: EdgeInsets.all(screenWidth * 0.03),
+                            decoration: BoxDecoration(
+                              color: Colors.white,
+                              borderRadius: BorderRadius.circular(
+                                screenWidth * 0.03,
+                              ),
+                            ),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  summary['title'],
+                                  style: GoogleFonts.inter(
+                                    fontSize: screenWidth * 0.03,
                                   ),
                                 ),
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Text(
-                                      summary['title'],
-                                      style: GoogleFonts.inter(
-                                        fontSize: screenWidth * 0.03,
-                                      ),
-                                    ),
-                                    SizedBox(height: screenHeight * 0.005),
-                                    Text(
-                                      summary['amount'],
-                                      style: GoogleFonts.inter(
-                                        color: summary['amountColor'],
-                                        fontWeight: FontWeight.bold,
-                                        fontSize: screenWidth * 0.05,
-                                      ),
-                                    ),
-                                    SizedBox(height: screenHeight * 0.005),
-                                    Text(
-                                      summary['subtitle'],
-                                      style: GoogleFonts.inter(
-                                        color: Colors.grey[600],
-                                        fontSize: screenWidth * 0.027,
-                                      ),
-                                    ),
-                                  ],
+                                SizedBox(height: screenHeight * 0.005),
+                                Text(
+                                  summary['amount'],
+                                  style: GoogleFonts.inter(
+                                    color: summary['amountColor'],
+                                    fontWeight: FontWeight.bold,
+                                    fontSize: screenWidth * 0.05,
+                                  ),
                                 ),
-                              );
-                            }).toList(),
+                                SizedBox(height: screenHeight * 0.005),
+                                Text(
+                                  summary['subtitle'],
+                                  style: GoogleFonts.inter(
+                                    color: Colors.grey[600],
+                                    fontSize: screenWidth * 0.027,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          );
+                        }).toList(),
                       ),
                     ),
                   ],
@@ -427,7 +503,6 @@ class _HomePageState extends State<HomePage> {
                 ),
                 child: Column(
                   children: [
-                    // Top Row
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
@@ -439,7 +514,7 @@ class _HomePageState extends State<HomePage> {
                           ),
                         ),
                         GestureDetector(
-                          onTap: widget.onAnalyticsTap, // Use the callback here
+                          onTap: widget.onAnalyticsTap,
                           child: Text(
                             'See More',
                             style: GoogleFonts.inter(
@@ -453,7 +528,6 @@ class _HomePageState extends State<HomePage> {
                       ],
                     ),
                     SizedBox(height: screenHeight * 0.015),
-                    // Overview Title
                     Text(
                       'Overview',
                       style: GoogleFonts.inter(
@@ -470,7 +544,6 @@ class _HomePageState extends State<HomePage> {
                       ),
                     ),
                     SizedBox(height: screenHeight * 0.02),
-                    // Bar Chart
                     SizedBox(
                       width: screenWidth * 0.9,
                       child: AspectRatio(
@@ -483,12 +556,7 @@ class _HomePageState extends State<HomePage> {
                               enabled: true,
                               touchTooltipData: BarTouchTooltipData(
                                 tooltipBgColor: Colors.black,
-                                getTooltipItem: (
-                                  group,
-                                  groupIndex,
-                                  rod,
-                                  rodIndex,
-                                ) {
+                                getTooltipItem: (group, groupIndex, rod, rodIndex) {
                                   return BarTooltipItem(
                                     '${dates[group.x]}\n₱${rod.toY.toStringAsFixed(2)}',
                                     GoogleFonts.inter(
@@ -551,11 +619,10 @@ class _HomePageState extends State<HomePage> {
                               show: true,
                               drawVerticalLine: false,
                               horizontalInterval: 1000,
-                              getDrawingHorizontalLine:
-                                  (value) => FlLine(
-                                    color: Colors.grey[200],
-                                    strokeWidth: 1,
-                                  ),
+                              getDrawingHorizontalLine: (value) => FlLine(
+                                color: Colors.grey[200],
+                                strokeWidth: 1,
+                              ),
                             ),
                             borderData: FlBorderData(show: false),
                             barGroups: List.generate(amounts.length, (index) {
@@ -564,10 +631,9 @@ class _HomePageState extends State<HomePage> {
                                 barRods: [
                                   BarChartRodData(
                                     toY: amounts[index],
-                                    color:
-                                        index == highlightIndex
-                                            ? Colors.black
-                                            : Colors.grey[350],
+                                    color: index == highlightIndex
+                                        ? Colors.black
+                                        : Colors.grey[350],
                                     width: screenWidth * 0.07,
                                     borderRadius: BorderRadius.circular(
                                       screenWidth * 0.015,
@@ -583,7 +649,6 @@ class _HomePageState extends State<HomePage> {
                   ],
                 ),
               ),
-              // --- End Graph Card ---
             ],
           ),
         ),

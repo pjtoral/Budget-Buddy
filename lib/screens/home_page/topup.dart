@@ -28,7 +28,7 @@ class _TopUpPageState extends State<TopUpPage> {
   String? _selectedCategory;
   bool _showCategories = false;
   bool _showAddCategory = false;
-  List<String> _categories = ['School', 'Motorcycle', 'Computer'];
+  List<String> _categories = [];
   double _currentBalance = 0;
 
   @override

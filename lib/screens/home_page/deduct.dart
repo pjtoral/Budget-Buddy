@@ -31,7 +31,7 @@ class _DeductPageState extends State<DeductPage> {
   String? _balanceAfter;
   bool _showCategories = false;
   bool _showAddCategory = false;
-  List<String> _categories = ['School', 'Motorcycle', 'Computer'];
+  List<String> _categories = [];
 
   @override
   void initState() {
