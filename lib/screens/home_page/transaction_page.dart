@@ -33,12 +33,8 @@ class _TransactionsPageState extends State<TransactionsPage> {
       locator<LocalStorageService>();
 
   double _currentBalance = 0;
-  String _selectedCategory = 'School';
-  List<String> _categories = [
-    'School',
-    'Motorcycle',
-    'Computer',
-  ]; // Changed to non-final
+  String _selectedCategory = 'All';
+  List<String> _categories = ['All']; // Start with just 'All'
 
   @override
   void initState() {
@@ -53,21 +49,45 @@ class _TransactionsPageState extends State<TransactionsPage> {
   }
 
   Future<void> _loadCategories() async {
-    final categories = _localStorageService.getCategories();
-    if (categories != null && categories.isNotEmpty) {
-      _categories = categories;
-      // If current selected category doesn't exist in new list, select first one
-      if (!_categories.contains(_selectedCategory)) {
-        _selectedCategory = _categories.first;
-      }
+    final userCategories = _localStorageService.getCategories();
+    if (userCategories != null && userCategories.isNotEmpty) {
+      setState(() {
+        _categories = ['All', ...userCategories];
+        // If current selected category doesn't exist in new list, default to 'All'
+        if (!_categories.contains(_selectedCategory)) {
+          _selectedCategory = 'All';
+        }
+      });
+    } else {
+      // No categories yet, just use 'All'
+      setState(() {
+        _categories = ['All'];
+        _selectedCategory = 'All';
+      });
     }
   }
 
   Future<List<TransactionModel>> _getFilteredTransactions() async {
-    final allTransactions = await _transactionServices.getTransactionByCategory(
-      _selectedCategory,
-    );
-    return allTransactions..sort((a, b) => b.date.compareTo(a.date));
+    if (_selectedCategory == 'All') {
+      // Get all transactions from all categories
+      final allTransactions = <TransactionModel>[];
+      final userCategories = _localStorageService.getCategories();
+      
+      if (userCategories != null && userCategories.isNotEmpty) {
+        for (final category in userCategories) {
+          final categoryTransactions = await _transactionServices
+              .getTransactionByCategory(category);
+          allTransactions.addAll(categoryTransactions);
+        }
+      }
+      
+      return allTransactions..sort((a, b) => b.date.compareTo(a.date));
+    } else {
+      final transactions = await _transactionServices.getTransactionByCategory(
+        _selectedCategory,
+      );
+      return transactions..sort((a, b) => b.date.compareTo(a.date));
+    }
   }
 
   @override
@@ -136,24 +156,56 @@ class _TransactionsPageState extends State<TransactionsPage> {
                 ),
               ),
 
-              // Category Filter
-              SingleChildScrollView(
-                scrollDirection: Axis.horizontal,
-                padding: const EdgeInsets.symmetric(
-                  horizontal: _horizontalPadding,
+              // Category Filter - Only show if there are user categories
+              if (_categories.length > 1)
+                SingleChildScrollView(
+                  scrollDirection: Axis.horizontal,
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: _horizontalPadding,
+                  ),
+                  child: Row(
+                    children: _categories
+                        .map(
+                          (cat) => _buildCategoryChip(
+                            cat,
+                            _selectedCategory == cat,
+                          ),
+                        )
+                        .toList(),
+                  ),
                 ),
-                child: Row(
-                  children:
-                      _categories
-                          .map(
-                            (cat) => _buildCategoryChip(
-                              cat,
-                              _selectedCategory == cat,
+
+              // Info message when no categories exist
+              if (_categories.length == 1)
+                Padding(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: _horizontalPadding,
+                    vertical: 8,
+                  ),
+                  child: Container(
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      color: Colors.blue[50],
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(color: Colors.blue[200]!),
+                    ),
+                    child: Row(
+                      children: [
+                        Icon(Icons.info_outline, color: Colors.blue[700]),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: Text(
+                            'Add categories when creating transactions to organize your expenses',
+                            style: GoogleFonts.inter(
+                              color: Colors.blue[700],
+                              fontSize: 13,
                             ),
-                          )
-                          .toList(),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
                 ),
-              ),
 
               // Search Bar
               Padding(
@@ -195,25 +247,37 @@ class _TransactionsPageState extends State<TransactionsPage> {
                         return ListView(
                           shrinkWrap: true,
                           physics: const NeverScrollableScrollPhysics(),
-                          children:
-                              transactions.isEmpty
-                                  ? [
-                                    Padding(
-                                      padding: const EdgeInsets.all(32.0),
-                                      child: Center(
-                                        child: Text(
-                                          'No transactions for this category.',
-                                          style: GoogleFonts.inter(
-                                            color: Colors.grey[600],
-                                            fontSize: 16,
+                          children: transactions.isEmpty
+                              ? [
+                                  Padding(
+                                    padding: const EdgeInsets.all(32.0),
+                                    child: Center(
+                                      child: Column(
+                                        children: [
+                                          Icon(
+                                            Icons.receipt_long_outlined,
+                                            size: 48,
+                                            color: Colors.grey[400],
                                           ),
-                                        ),
+                                          const SizedBox(height: 16),
+                                          Text(
+                                            _categories.length == 1
+                                                ? 'No transactions yet.\nStart by adding or deducting money!'
+                                                : 'No transactions for this category.',
+                                            textAlign: TextAlign.center,
+                                            style: GoogleFonts.inter(
+                                              color: Colors.grey[600],
+                                              fontSize: 16,
+                                            ),
+                                          ),
+                                        ],
                                       ),
                                     ),
-                                  ]
-                                  : transactions
-                                      .map((tx) => _buildTransactionItem(tx))
-                                      .toList(),
+                                  ),
+                                ]
+                              : transactions
+                                  .map((tx) => _buildTransactionItem(tx))
+                                  .toList(),
                         );
                       },
                     ),

@@ -22,9 +22,9 @@ class TransactionModel {
 
   factory TransactionModel.fromJson(Map<String, dynamic> json) {
     return TransactionModel(
-      amount: json['amount'].toDouble(), // Handles both int and double
+      amount: (json['amount'] as num).toDouble(), // Handles both int and double
       description: json['description'],
-      category: json['category'], 
+      category: json['category'] ?? '', 
       date: DateTime.parse(json['date']),
     );
   }

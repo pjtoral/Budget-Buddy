@@ -23,13 +23,12 @@ class LocalStorageService {
       _prefs?.setDouble(key, value);
   Future<void> setStringList(String key, List<String> value) async =>
       _prefs?.setStringList(key, value);
-  //  Future<void> setTransactionList(String key, List<TransactionModel> value) async =>
-  //     _prefs?.setString(key,jsonEncode(value.map((e) => e.toJson()).toList()));
 
   String? getString(String key) => _prefs?.getString(key);
   int? getInt(String key) => _prefs?.getInt(key);
   double? getDouble(String key) => _prefs?.getDouble(key);
   List<String>? getStringList(String key) => _prefs?.getStringList(key);
+  
   Future<bool> getBool(String key) async {
     final prefs = await SharedPreferences.getInstance();
     return prefs.getBool(key) ?? false;
@@ -39,41 +38,60 @@ class LocalStorageService {
 
   Future<void> clear() async => _prefs?.clear();
 
-  //added function to save transaction list
-  Future<void> saveTransactions(
-    List<TransactionModel> transactions) async {
-      final jsonList = transactions.map((t) => t.toJson()).toList();
-      await _prefs?.setString('transactions', jsonEncode(jsonList));
+  // Added function to save transaction list
+  Future<void> saveTransactions(List<TransactionModel> transactions) async {
+    final jsonList = transactions.map((t) => t.toJson()).toList();
+    await _prefs?.setString('transactions', jsonEncode(jsonList));
+  }
+
+  // Synchronous version - can be called without await
+  List<TransactionModel>? getTransactions() {
+    final jsonString = _prefs?.getString('transactions');
+    if (jsonString != null) {
+      final jsonList = jsonDecode(jsonString) as List<dynamic>;
+      return jsonList.map((json) => TransactionModel.fromJson(json)).toList();
     }
+    return null;
+  }
 
-    List<TransactionModel>? getTransactions() {
-      final jsonString = _prefs?.getString('transactions');
-      if(jsonString != null) {
-        final jsonList = jsonDecode(jsonString) as List<dynamic>;
-        return jsonList.map((json) => TransactionModel.fromJson(json)).toList();
-      }
-      return null;
+  // Async version if you need to ensure _prefs is initialized
+  Future<List<TransactionModel>?> getTransactionsAsync() async {
+    final prefs = _prefs ?? await SharedPreferences.getInstance();
+    final jsonString = prefs.getString('transactions');
+    if (jsonString != null) {
+      final jsonList = jsonDecode(jsonString) as List<dynamic>;
+      return jsonList.map((json) => TransactionModel.fromJson(json)).toList();
     }
+    return null;
+  }
 
-    Future<double> getBalance()
-      async => _prefs?.getDouble('balance') ?? 0.0;
+  // Fixed: Made synchronous to avoid Future arithmetic operations
+  double getBalanceSync() {
+    return _prefs?.getDouble('balance') ?? 0.0;
+  }
 
-    Future<void> setBalance(double value) 
-      async => _prefs?.setDouble('balance', value);
+  // Keep async version for cases where _prefs might not be initialized
+  Future<double> getBalance() async {
+    final prefs = _prefs ?? await SharedPreferences.getInstance();
+    return prefs.getDouble('balance') ?? 0.0;
+  }
 
-    Future<void> _saveCategories(List<String> categories) async {
-      await _prefs?.setString('categories', jsonEncode(categories));
+  Future<void> setBalance(double value) async {
+    final prefs = _prefs ?? await SharedPreferences.getInstance();
+    await prefs.setDouble('balance', value);
+  }
+
+  Future<void> _saveCategories(List<String> categories) async {
+    await _prefs?.setString('categories', jsonEncode(categories));
+  }
+
+  List<String>? getCategories() {
+    final jsonString = _prefs?.getString('categories');
+    if (jsonString != null) {
+      return List<String>.from(jsonDecode(jsonString));
     }
+    return null;
+  }
 
-    List<String>? getCategories() {
-      final jsonString = _prefs?.getString('categories');
-      if (jsonString != null) {
-        return List<String>.from(jsonDecode(jsonString));
-      }
-      return null;
-    }
-
-    Future<void> clearAll() 
-      async => _prefs?.clear();
-
+  Future<void> clearAll() async => _prefs?.clear();
 }
