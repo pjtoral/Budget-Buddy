@@ -4,9 +4,10 @@ import 'package:budgetbuddy_project/services/transaction_services.dart';
 import 'package:budgetbuddy_project/services/balance_service.dart';
 import 'package:budgetbuddy_project/models/transaction_model.dart';
 import 'package:budgetbuddy_project/common/string_helpers.dart';
+import 'package:budgetbuddy_project/widgets/graph_report_card.dart';
+import 'package:budgetbuddy_project/widgets/category_filter_chips.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:fl_chart/fl_chart.dart';
 import 'package:auto_size_text/auto_size_text.dart';
 
 class AnalyticsPage extends StatelessWidget {
@@ -96,7 +97,6 @@ class _GraphReportScreenState extends State<GraphReportScreen> {
     }
 
     _calculateSummaryStats(filteredTransactions);
-
     setState(() {});
   }
 
@@ -117,7 +117,7 @@ class _GraphReportScreenState extends State<GraphReportScreen> {
 
     switch (selectedPeriod) {
       case 'Week':
-        startDate = now.subtract(Duration(days: 7));
+        startDate = now.subtract(const Duration(days: 7));
         break;
       case 'Month':
         startDate = DateTime(now.year, now.month - 1, now.day);
@@ -126,7 +126,7 @@ class _GraphReportScreenState extends State<GraphReportScreen> {
         startDate = DateTime(now.year, now.month - 3, now.day);
         break;
       default:
-        startDate = now.subtract(Duration(days: 7));
+        startDate = now.subtract(const Duration(days: 7));
     }
 
     return allTransactions.where((tx) => tx.date.isAfter(startDate)).toList()
@@ -223,7 +223,6 @@ class _GraphReportScreenState extends State<GraphReportScreen> {
 
     if (totalAvailable > 0) {
       budgetProgress = (totalExpenses / totalAvailable).clamp(0.0, 1.0);
-
       if (budgetProgress < 0.5) {
         budgetStatus = 'Great! Under Budget';
         budgetStatusColor = Colors.green;
@@ -260,27 +259,6 @@ class _GraphReportScreenState extends State<GraphReportScreen> {
     return months[month];
   }
 
-  double get maxY {
-    if (chartData.isEmpty || chartData.every((element) => element == 0)) {
-      return 1000;
-    }
-    final max = chartData.reduce((a, b) => a > b ? a : b);
-    return (max * 1.2).ceilToDouble();
-  }
-
-  int get highlightIndex {
-    if (chartData.isEmpty) return 0;
-    double maxValue = chartData[0];
-    int maxIndex = 0;
-    for (int i = 1; i < chartData.length; i++) {
-      if (chartData[i] > maxValue) {
-        maxValue = chartData[i];
-        maxIndex = i;
-      }
-    }
-    return maxIndex;
-  }
-
   String _getPeriodDateRange() {
     final now = DateTime.now();
     if (selectedPeriod == 'Week') {
@@ -297,13 +275,10 @@ class _GraphReportScreenState extends State<GraphReportScreen> {
 
   @override
   Widget build(BuildContext context) {
-    double screenWidth = MediaQuery.of(context).size.width;
-    double screenHeight = MediaQuery.of(context).size.height;
-
     return Scaffold(
       backgroundColor: const Color(0xFFF6F6F6),
       appBar: AppBar(
-        backgroundColor: Color(0xFFF6F6F6),
+        backgroundColor: const Color(0xFFF6F6F6),
         elevation: 0,
         centerTitle: true,
         title: Text(
@@ -320,6 +295,7 @@ class _GraphReportScreenState extends State<GraphReportScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
+            // Period Filter
             Padding(
               padding: const EdgeInsets.only(
                 top: 16,
@@ -328,7 +304,6 @@ class _GraphReportScreenState extends State<GraphReportScreen> {
                 bottom: 8,
               ),
               child: Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
                     'Time Period: ',
@@ -341,73 +316,54 @@ class _GraphReportScreenState extends State<GraphReportScreen> {
                     child: SingleChildScrollView(
                       scrollDirection: Axis.horizontal,
                       child: Row(
-                        children: periods.map((period) {
-                          return Padding(
-                            padding: const EdgeInsets.only(right: 8),
-                            child: ChoiceChip(
-                              label: Text(period),
-                              selected: selectedPeriod == period,
-                              selectedColor: Colors.black,
-                              backgroundColor: Colors.grey[200],
-                              labelStyle: GoogleFonts.inter(
-                                color:
-                                    selectedPeriod == period
-                                        ? Colors.white
-                                        : Colors.black,
-                                fontWeight: FontWeight.w500,
-                              ),
-                              onSelected: (_) {
-                                setState(() {
-                                  selectedPeriod = period;
-                                });
-                                _refreshAnalytics();
-                              },
-                            ),
-                          );
-                        }).toList(),
+                        children:
+                            periods.map((period) {
+                              return Padding(
+                                padding: const EdgeInsets.only(right: 8),
+                                child: ChoiceChip(
+                                  label: Text(period),
+                                  selected: selectedPeriod == period,
+                                  selectedColor: Colors.black,
+                                  backgroundColor: Colors.grey[200],
+                                  labelStyle: GoogleFonts.inter(
+                                    color:
+                                        selectedPeriod == period
+                                            ? Colors.white
+                                            : Colors.black,
+                                    fontWeight: FontWeight.w500,
+                                  ),
+                                  onSelected: (_) {
+                                    setState(() {
+                                      selectedPeriod = period;
+                                    });
+                                    _refreshAnalytics();
+                                  },
+                                ),
+                              );
+                            }).toList(),
                       ),
                     ),
                   ),
                 ],
               ),
             ),
+
+            // Category Filter using reusable widget
             if (categories.length > 1)
               Padding(
                 padding: const EdgeInsets.only(left: 12, right: 12, bottom: 12),
-                child: SingleChildScrollView(
-                  scrollDirection: Axis.horizontal,
-                  child: Row(
-                    children: List.generate(categories.length, (index) {
-                      bool isSelected = selectedCategory == index;
-                      return Padding(
-                        padding: const EdgeInsets.only(right: 8),
-                        child: ChoiceChip(
-                          label: Text(
-                            categories[index],
-                            style: GoogleFonts.inter(
-                              color: isSelected ? Colors.white : Colors.black,
-                              fontWeight: FontWeight.w500,
-                              fontSize: 16,
-                            ),
-                          ),
-                          selected: isSelected,
-                          selectedColor: Colors.black,
-                          backgroundColor: Colors.grey[200],
-                          onSelected: (_) {
-                            setState(() {
-                              selectedCategory = index;
-                            });
-                            _refreshAnalytics();
-                          },
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(20),
-                          ),
-                        ),
-                      );
-                    }),
-                  ),
+                child: CategoryFilterChips(
+                  categories: categories,
+                  selectedCategory: categories[selectedCategory],
+                  onCategorySelected: (cat) {
+                    setState(() {
+                      selectedCategory = categories.indexOf(cat);
+                    });
+                    _refreshAnalytics();
+                  },
                 ),
               ),
+
             if (categories.length == 1)
               Padding(
                 padding: const EdgeInsets.only(left: 12, right: 12, bottom: 12),
@@ -435,6 +391,8 @@ class _GraphReportScreenState extends State<GraphReportScreen> {
                   ),
                 ),
               ),
+
+            // Budget Status Card
             Container(
               margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
               padding: const EdgeInsets.all(20),
@@ -487,185 +445,18 @@ class _GraphReportScreenState extends State<GraphReportScreen> {
                 ],
               ),
             ),
-            Container(
-              margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-              padding: const EdgeInsets.all(20),
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(28),
-                border: Border.all(color: const Color(0xFFE0E0E0)),
-              ),
-              child: Column(
-                children: [
-                  Text(
-                    '${categories[selectedCategory]} ${selectedPeriod == 'Week' ? 'Daily' : selectedPeriod == 'Month' ? 'Daily' : 'Weekly'} Spending',
-                    style: GoogleFonts.inter(
-                      fontWeight: FontWeight.bold,
-                      fontSize: 20,
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-                  Text(
-                    _getPeriodDateRange(),
-                    style: GoogleFonts.inter(
-                      color: Colors.grey[600],
-                      fontSize: 15,
-                    ),
-                  ),
-                  const SizedBox(height: 24),
-                  SizedBox(
-                    height: screenHeight * 0.45,
-                    width: double.infinity,
-                    child: chartData.isEmpty ||
-                            chartData.every((element) => element == 0)
-                        ? Center(
-                            child: Column(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                Icon(
-                                  Icons.bar_chart_outlined,
-                                  size: 64,
-                                  color: Colors.grey[300],
-                                ),
-                                const SizedBox(height: 16),
-                                Text(
-                                  'No transaction data available',
-                                  style: GoogleFonts.inter(
-                                    color: Colors.grey[600],
-                                    fontSize: 16,
-                                  ),
-                                ),
-                                const SizedBox(height: 8),
-                                Text(
-                                  'Start adding transactions to see analytics',
-                                  style: GoogleFonts.inter(
-                                    color: Colors.grey[500],
-                                    fontSize: 14,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          )
-                        : BarChart(
-                            BarChartData(
-                              maxY: maxY,
-                              minY: 0,
-                              barTouchData: BarTouchData(
-                                enabled: true,
-                                touchTooltipData: BarTouchTooltipData(
-                                  tooltipBgColor: Colors.black,
-                                  getTooltipItem: (
-                                    group,
-                                    groupIndex,
-                                    rod,
-                                    rodIndex,
-                                  ) {
-                                    final dateText =
-                                        chartDates.length > group.x
-                                            ? chartDates[group.x]
-                                            : 'Unknown date';
-                                    return BarTooltipItem(
-                                      '$dateText\n₱${rod.toY.toStringAsFixed(2)}',
-                                      GoogleFonts.inter(
-                                        color: Colors.white,
-                                        fontWeight: FontWeight.bold,
-                                        fontSize: 13,
-                                      ),
-                                    );
-                                  },
-                                ),
-                              ),
-                              titlesData: FlTitlesData(
-                                leftTitles: AxisTitles(
-                                  sideTitles: SideTitles(
-                                    showTitles: true,
-                                    reservedSize: 50,
-                                    getTitlesWidget: (value, meta) {
-                                      final interval =
-                                          maxY > 10000
-                                              ? 5000
-                                              : (maxY > 1000 ? 1000 : 500);
-                                      if (value % interval != 0)
-                                        return Container();
-                                      return Text(
-                                        '₱${(value ~/ 1000)}K',
-                                        style: GoogleFonts.inter(
-                                          fontSize: 12,
-                                          color: Colors.grey[700],
-                                        ),
-                                      );
-                                    },
-                                  ),
-                                ),
-                                bottomTitles: AxisTitles(
-                                  sideTitles: SideTitles(
-                                    showTitles: true,
-                                    reservedSize: 40,
-                                    getTitlesWidget: (value, meta) {
-                                      int idx = value.toInt();
-                                      if (idx < 0 ||
-                                          idx >= chartLabels.length) {
-                                        return Container();
-                                      }
-                                      return Padding(
-                                        padding: const EdgeInsets.only(
-                                          top: 8.0,
-                                        ),
-                                        child: Text(
-                                          chartLabels[idx],
-                                          style: GoogleFonts.inter(
-                                            fontSize: 12,
-                                            color: Colors.grey[800],
-                                          ),
-                                        ),
-                                      );
-                                    },
-                                  ),
-                                ),
-                                rightTitles: AxisTitles(
-                                  sideTitles: SideTitles(showTitles: false),
-                                ),
-                                topTitles: AxisTitles(
-                                  sideTitles: SideTitles(showTitles: false),
-                                ),
-                              ),
-                              gridData: FlGridData(
-                                show: true,
-                                drawVerticalLine: false,
-                                horizontalInterval:
-                                    maxY > 10000
-                                        ? 5000
-                                        : (maxY > 1000 ? 1000 : 500),
-                                getDrawingHorizontalLine: (value) => FlLine(
-                                  color: Colors.grey[200],
-                                  strokeWidth: 1,
-                                ),
-                              ),
-                              borderData: FlBorderData(show: false),
-                              barGroups: List.generate(chartData.length, (
-                                index,
-                              ) {
-                                return BarChartGroupData(
-                                  x: index,
-                                  barRods: [
-                                    BarChartRodData(
-                                      toY: chartData[index],
-                                      color:
-                                          index == highlightIndex
-                                              ? Colors.black
-                                              : Colors.grey[350],
-                                      width: 32,
-                                      borderRadius: BorderRadius.circular(8),
-                                    ),
-                                  ],
-                                );
-                              }),
-                            ),
-                          ),
-                  ),
-                ],
-              ),
+
+            // Main Graph Report
+            GraphReportCard(
+              categoryName: categories[selectedCategory],
+              selectedPeriod: selectedPeriod,
+              dateRange: _getPeriodDateRange(),
+              chartData: chartData,
+              chartLabels: chartLabels,
+              chartDates: chartDates,
             ),
+
+            // Income & Expense Cards
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
               child: Row(
@@ -738,6 +529,8 @@ class _GraphReportScreenState extends State<GraphReportScreen> {
                 ],
               ),
             ),
+
+            // Spending Insights
             Container(
               margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
               padding: const EdgeInsets.all(20),

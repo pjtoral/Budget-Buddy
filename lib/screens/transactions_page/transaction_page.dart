@@ -1,6 +1,8 @@
 import 'package:budgetbuddy_project/services/balance_service.dart';
 import 'package:budgetbuddy_project/services/local_storage_service.dart';
 import 'package:budgetbuddy_project/services/service_locator.dart';
+import 'package:budgetbuddy_project/widgets/balance_card.dart';
+import 'package:budgetbuddy_project/widgets/category_filter_chips.dart'; // ✅ Added
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../services/transaction_services.dart';
@@ -17,35 +19,23 @@ class TransactionsPage extends StatefulWidget {
 class _TransactionsPageState extends State<TransactionsPage> {
   static const double _horizontalPadding = 16.0;
   static const double _verticalPadding = 16.0;
-  static const double _containerPadding = 16.0;
-  static const double _chipSpacing = 8.0;
   static const double _transactionSpacing = 8.0;
-  static const double _balanceFontSize = 28;
   static const double _titleFontSize = 18;
-  static const double _categoryFontSize = 14;
   static const double _transactionTitleFontSize = 16;
   static const double _transactionSubtitleFontSize = 12;
 
   final TransactionServices _transactionServices =
       locator<TransactionServices>();
-  final BalanceService _balanceService = locator<BalanceService>();
   final LocalStorageService _localStorageService =
       locator<LocalStorageService>();
 
-  double _currentBalance = 0;
   String _selectedCategory = 'All';
-  List<String> _categories = ['All']; // Start with just 'All'
+  List<String> _categories = ['All'];
 
   @override
   void initState() {
     super.initState();
-    _loadInitialData();
-  }
-
-  Future<void> _loadInitialData() async {
-    _currentBalance = await _balanceService.getBalance();
-    await _loadCategories();
-    setState(() {});
+    _loadCategories();
   }
 
   Future<void> _loadCategories() async {
@@ -53,13 +43,11 @@ class _TransactionsPageState extends State<TransactionsPage> {
     if (userCategories != null && userCategories.isNotEmpty) {
       setState(() {
         _categories = ['All', ...userCategories];
-        // If current selected category doesn't exist in new list, default to 'All'
         if (!_categories.contains(_selectedCategory)) {
           _selectedCategory = 'All';
         }
       });
     } else {
-      // No categories yet, just use 'All'
       setState(() {
         _categories = ['All'];
         _selectedCategory = 'All';
@@ -69,10 +57,9 @@ class _TransactionsPageState extends State<TransactionsPage> {
 
   Future<List<TransactionModel>> _getFilteredTransactions() async {
     if (_selectedCategory == 'All') {
-      // Get all transactions from all categories
       final allTransactions = <TransactionModel>[];
       final userCategories = _localStorageService.getCategories();
-      
+
       if (userCategories != null && userCategories.isNotEmpty) {
         for (final category in userCategories) {
           final categoryTransactions = await _transactionServices
@@ -80,7 +67,7 @@ class _TransactionsPageState extends State<TransactionsPage> {
           allTransactions.addAll(categoryTransactions);
         }
       }
-      
+
       return allTransactions..sort((a, b) => b.date.compareTo(a.date));
     } else {
       final transactions = await _transactionServices.getTransactionByCategory(
@@ -114,68 +101,26 @@ class _TransactionsPageState extends State<TransactionsPage> {
         body: SingleChildScrollView(
           child: Column(
             children: [
-              // Current Balance Section
-              Padding(
-                padding: const EdgeInsets.symmetric(
+              const Padding(
+                padding: EdgeInsets.symmetric(
                   horizontal: _horizontalPadding,
                   vertical: _verticalPadding,
                 ),
-                child: Container(
-                  width: double.infinity,
-                  margin: const EdgeInsets.symmetric(horizontal: 0),
-                  padding: const EdgeInsets.all(_containerPadding),
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    border: Border.all(
-                      color: const Color(0xFFE0E0E0),
-                      width: 1.0,
-                    ),
-                    borderRadius: BorderRadius.circular(30),
-                  ),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        'Current Balance',
-                        style: GoogleFonts.inter(
-                          color: Colors.grey[600],
-                          fontSize: _categoryFontSize,
-                        ),
-                      ),
-                      const SizedBox(height: 8),
-                      Text(
-                        formatMoney(_currentBalance),
-                        style: GoogleFonts.inter(
-                          color: Colors.black,
-                          fontSize: _balanceFontSize,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
+                child: BalanceCard(),
               ),
 
-              // Category Filter - Only show if there are user categories
+              // ✅ Category Filter now uses reusable widget
               if (_categories.length > 1)
-                SingleChildScrollView(
-                  scrollDirection: Axis.horizontal,
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: _horizontalPadding,
-                  ),
-                  child: Row(
-                    children: _categories
-                        .map(
-                          (cat) => _buildCategoryChip(
-                            cat,
-                            _selectedCategory == cat,
-                          ),
-                        )
-                        .toList(),
-                  ),
+                CategoryFilterChips(
+                  categories: _categories,
+                  selectedCategory: _selectedCategory,
+                  onCategorySelected: (cat) {
+                    setState(() {
+                      _selectedCategory = cat;
+                    });
+                  },
                 ),
 
-              // Info message when no categories exist
               if (_categories.length == 1)
                 Padding(
                   padding: const EdgeInsets.symmetric(
@@ -247,37 +192,38 @@ class _TransactionsPageState extends State<TransactionsPage> {
                         return ListView(
                           shrinkWrap: true,
                           physics: const NeverScrollableScrollPhysics(),
-                          children: transactions.isEmpty
-                              ? [
-                                  Padding(
-                                    padding: const EdgeInsets.all(32.0),
-                                    child: Center(
-                                      child: Column(
-                                        children: [
-                                          Icon(
-                                            Icons.receipt_long_outlined,
-                                            size: 48,
-                                            color: Colors.grey[400],
-                                          ),
-                                          const SizedBox(height: 16),
-                                          Text(
-                                            _categories.length == 1
-                                                ? 'No transactions yet.\nStart by adding or deducting money!'
-                                                : 'No transactions for this category.',
-                                            textAlign: TextAlign.center,
-                                            style: GoogleFonts.inter(
-                                              color: Colors.grey[600],
-                                              fontSize: 16,
+                          children:
+                              transactions.isEmpty
+                                  ? [
+                                    Padding(
+                                      padding: const EdgeInsets.all(32.0),
+                                      child: Center(
+                                        child: Column(
+                                          children: [
+                                            Icon(
+                                              Icons.receipt_long_outlined,
+                                              size: 48,
+                                              color: Colors.grey[400],
                                             ),
-                                          ),
-                                        ],
+                                            const SizedBox(height: 16),
+                                            Text(
+                                              _categories.length == 1
+                                                  ? 'No transactions yet.\nStart by adding or deducting money!'
+                                                  : 'No transactions for this category.',
+                                              textAlign: TextAlign.center,
+                                              style: GoogleFonts.inter(
+                                                color: Colors.grey[600],
+                                                fontSize: 16,
+                                              ),
+                                            ),
+                                          ],
+                                        ),
                                       ),
                                     ),
-                                  ),
-                                ]
-                              : transactions
-                                  .map((tx) => _buildTransactionItem(tx))
-                                  .toList(),
+                                  ]
+                                  : transactions
+                                      .map((tx) => _buildTransactionItem(tx))
+                                      .toList(),
                         );
                       },
                     ),
@@ -287,29 +233,6 @@ class _TransactionsPageState extends State<TransactionsPage> {
             ],
           ),
         ),
-      ),
-    );
-  }
-
-  Widget _buildCategoryChip(String label, bool isSelected) {
-    return Padding(
-      padding: const EdgeInsets.only(right: _chipSpacing),
-      child: ChoiceChip(
-        label: Text(
-          label,
-          style: GoogleFonts.inter(
-            color: isSelected ? Colors.white : Colors.black,
-            fontSize: _categoryFontSize,
-          ),
-        ),
-        selected: isSelected,
-        selectedColor: Colors.black,
-        backgroundColor: Colors.grey[300],
-        onSelected: (_) {
-          setState(() {
-            _selectedCategory = label;
-          });
-        },
       ),
     );
   }
