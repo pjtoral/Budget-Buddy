@@ -1,20 +1,16 @@
-import 'package:budgetbuddy_project/screens/BottomNavBar.dart';
+import 'package:budgetbuddy_project/widgets/BottomNavBar.dart';
 import 'package:budgetbuddy_project/services/local_storage_service.dart';
 import 'package:budgetbuddy_project/services/service_locator.dart';
 import 'package:flutter/material.dart';
 import 'screens/login.dart';
 
-
 LocalStorageService storage = LocalStorageService();
-void main()async {
- 
+void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   setupLocator();
   await LocalStorageService.init();
   runApp(MyApp());
 }
-
-
 
 class MyApp extends StatefulWidget {
   const MyApp({super.key});
@@ -31,10 +27,9 @@ class _MyAppState extends State<MyApp> {
   void initState() {
     getUser();
     super.initState();
-   
   }
 
-  void getUser() async{
+  void getUser() async {
     bool isLogged = await storage.isLoggedIn();
     print(isLogged);
     setState(() {
@@ -42,12 +37,12 @@ class _MyAppState extends State<MyApp> {
     });
   }
 
-    @override
+  @override
   Widget build(BuildContext context) {
     return MaterialApp(
       title: 'Simple Login',
       theme: ThemeData(primarySwatch: Colors.blue),
-      home:   loggedIn ?   HomeScreen() : LoginScreen(),
-     );
+      home: loggedIn ? HomeScreen() : LoginScreen(),
+    );
   }
 }
