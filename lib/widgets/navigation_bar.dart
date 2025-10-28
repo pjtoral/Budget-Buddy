@@ -6,17 +6,34 @@ import 'package:budgetbuddy_project/screens/profile_page/profile_page.dart';
 import 'package:budgetbuddy_project/screens/home_page/topup.dart';
 import 'package:budgetbuddy_project/screens/home_page/deduct.dart';
 
+/// A stateful widget that serves as the main navigation container for the app.
+///
+/// The `HomeScreen` widget provides a bottom navigation bar with five tabs:
+/// Home, Analytics, a central FAB placeholder, History (Transactions), and Profile.
+/// It also includes a floating action button (FAB) that opens a modal bottom sheet
+/// for adding or deducting money from the user's balance.
+///
+/// The widget manages navigation between different pages and handles callbacks
+/// for refreshing data and navigating between sections.
 class HomeScreen extends StatefulWidget {
+  /// Creates a `HomeScreen` widget.
   const HomeScreen({super.key});
 
   @override
   State<HomeScreen> createState() => _HomeScreenState();
 }
 
+/// The state for the `HomeScreen` widget.
 class _HomeScreenState extends State<HomeScreen> {
+  /// The index of the currently selected navigation item.
+  ///
+  /// Index 0: Home, 1: Analytics, 2: FAB placeholder, 3: History, 4: Profile.
   int _selectedIndex = 0;
 
-  // Define the pages dynamically so you can pass callbacks
+  /// Returns the list of pages corresponding to each navigation item.
+  ///
+  /// The pages are defined dynamically to allow passing callbacks for
+  /// navigation and refresh actions.
   List<Widget> _pages() {
     return [
       HomePage(
@@ -32,6 +49,10 @@ class _HomeScreenState extends State<HomeScreen> {
     ];
   }
 
+  /// Handles navigation when a bottom navigation item is tapped.
+  ///
+  /// Updates the [_selectedIndex] to display the corresponding page.
+  /// Index 2 (FAB placeholder) is skipped as it's not a navigable page.
   void _onItemTapped(int index) {
     // Skip index 2 (FAB placeholder)
     if (index == 2) return;
@@ -41,12 +62,20 @@ class _HomeScreenState extends State<HomeScreen> {
     });
   }
 
+  /// Displays a modal bottom sheet with options to add or deduct money.
+  ///
+  /// The bottom sheet contains two options:
+  /// - "Add Money": Navigates to the TopUpPage for adding funds.
+  /// - "Deduct Money": Navigates to the DeductPage for recording expenses.
+  ///
+  /// After completing either action, the home screen is refreshed to reflect
+  /// the updated balance.
   void _showAddDeductMenu() {
     showModalBottomSheet(
       context: context,
       backgroundColor: Colors.transparent,
       builder: (context) {
-        // Use a local state for the bottom sheet to manage tap feedback
+        // Use a local state for the bottom sheet to manage tap feedback.
         return StatefulBuilder(
           builder: (BuildContext context, StateSetter setModalState) {
             Color addColor = Colors.green[50]!;
@@ -64,7 +93,7 @@ class _HomeScreenState extends State<HomeScreen> {
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  // Handle bar
+                  // Handle bar for the bottom sheet.
                   Container(
                     width: 40,
                     height: 4,
@@ -74,7 +103,7 @@ class _HomeScreenState extends State<HomeScreen> {
                     ),
                   ),
                   SizedBox(height: 20),
-                  // Add button
+                  // "Add Money" option.
                   ListTile(
                     leading: Container(
                       width: 48,
@@ -113,7 +142,7 @@ class _HomeScreenState extends State<HomeScreen> {
                     },
                   ),
                   SizedBox(height: 8),
-                  // Deduct button
+                  // "Deduct Money" option.
                   ListTile(
                     leading: Container(
                       width: 48,
@@ -165,11 +194,12 @@ class _HomeScreenState extends State<HomeScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: const Color(0xFFF6F6F6),
+      // Display the currently selected page.
       body: _pages()[_selectedIndex],
       bottomNavigationBar: Stack(
         clipBehavior: Clip.none,
         children: [
-          // Bottom Navigation Bar
+          // Bottom Navigation Bar with five items.
           BottomNavigationBar(
             type: BottomNavigationBarType.fixed,
             currentIndex: _selectedIndex,
@@ -198,7 +228,7 @@ class _HomeScreenState extends State<HomeScreen> {
               ),
             ],
           ),
-          // Floating Action Button
+          // Floating Action Button positioned at the center of the bottom bar.
           Positioned(
             bottom: 20,
             left: MediaQuery.of(context).size.width / 2 - 32,
