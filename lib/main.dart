@@ -1,8 +1,8 @@
-import 'package:budgetbuddy_project/widgets/BottomNavBar.dart';
+import 'package:budgetbuddy_project/screens/authorization_pages/login.dart';
+import 'package:budgetbuddy_project/widgets/navigation_bar.dart';
 import 'package:budgetbuddy_project/services/local_storage_service.dart';
 import 'package:budgetbuddy_project/services/service_locator.dart';
 import 'package:flutter/material.dart';
-import 'screens/login.dart';
 
 LocalStorageService storage = LocalStorageService();
 void main() async {

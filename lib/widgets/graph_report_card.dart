@@ -2,15 +2,47 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:fl_chart/fl_chart.dart';
 
+/// A stateless widget that displays a bar chart showing spending data over time.
+///
+/// The `GraphReportCard` widget visualizes spending patterns for a specific category
+/// across different time periods (daily or weekly). It uses the `fl_chart` package
+/// to render an interactive bar chart with tooltips. The widget can optionally
+/// include an "Analytics" button for navigation to a detailed analytics page.
+///
+/// When there is no transaction data available, the widget displays a placeholder
+/// message encouraging users to add transactions.
 class GraphReportCard extends StatelessWidget {
+  /// The name of the category being displayed (e.g., "Food", "Transport").
   final String categoryName;
-  final String selectedPeriod;
-  final String dateRange;
-  final List<double> chartData;
-  final List<String> chartLabels;
-  final List<String> chartDates;
-  final VoidCallback? onAnalyticsTap; // Only for HomePage
 
+  /// The selected time period for the chart (e.g., "Week", "Month", "Year").
+  final String selectedPeriod;
+
+  /// A human-readable date range string (e.g., "Jan 1 - Jan 7, 2024").
+  final String dateRange;
+
+  /// The list of spending amounts corresponding to each bar in the chart.
+  final List<double> chartData;
+
+  /// The list of labels for the x-axis (e.g., day names or week numbers).
+  final List<String> chartLabels;
+
+  /// The list of full date strings used in tooltips when hovering over bars.
+  final List<String> chartDates;
+
+  /// An optional callback invoked when the "Analytics" button is tapped.
+  ///
+  /// This is only displayed when used on the HomePage. If null, the button
+  /// is not shown.
+  final VoidCallback? onAnalyticsTap;
+
+  /// Creates a `GraphReportCard` widget.
+  ///
+  /// The [categoryName], [selectedPeriod], [dateRange], [chartData],
+  /// [chartLabels], and [chartDates] parameters are required.
+  ///
+  /// The [onAnalyticsTap] parameter is optional and should be provided
+  /// when the widget is used on the HomePage to enable navigation to analytics.
   const GraphReportCard({
     super.key,
     required this.categoryName,
@@ -22,6 +54,10 @@ class GraphReportCard extends StatelessWidget {
     this.onAnalyticsTap,
   });
 
+  /// Calculates the maximum Y-axis value for the chart.
+  ///
+  /// Returns 1000 if the chart data is empty or all values are zero.
+  /// Otherwise, returns 120% of the maximum value in [chartData], rounded up.
   double get maxY {
     if (chartData.isEmpty || chartData.every((element) => element == 0)) {
       return 1000;
@@ -30,6 +66,10 @@ class GraphReportCard extends StatelessWidget {
     return (max * 1.2).ceilToDouble();
   }
 
+  /// Determines the index of the bar with the highest value in [chartData].
+  ///
+  /// This bar will be highlighted with a different color in the chart.
+  /// Returns 0 if the chart data is empty.
   int get highlightIndex {
     if (chartData.isEmpty) return 0;
     double maxValue = chartData[0];
@@ -46,6 +86,7 @@ class GraphReportCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     double screenHeight = MediaQuery.of(context).size.height;
+    // Determine if this widget is being used on the HomePage.
     bool isHomePage = onAnalyticsTap != null;
 
     return Container(
@@ -58,6 +99,7 @@ class GraphReportCard extends StatelessWidget {
       ),
       child: Column(
         children: [
+          // Header section with title, date range, and optional Analytics button.
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
@@ -65,6 +107,7 @@ class GraphReportCard extends StatelessWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
+                    // Display the chart title based on category and period.
                     Text(
                       '$categoryName ${selectedPeriod == 'Week'
                           ? 'Daily'
@@ -77,6 +120,7 @@ class GraphReportCard extends StatelessWidget {
                       ),
                     ),
                     const SizedBox(height: 8),
+                    // Display the date range.
                     Text(
                       dateRange,
                       style: GoogleFonts.inter(
@@ -87,6 +131,7 @@ class GraphReportCard extends StatelessWidget {
                   ],
                 ),
               ),
+              // Show Analytics button only on HomePage.
               if (isHomePage)
                 GestureDetector(
                   onTap: onAnalyticsTap,
@@ -112,12 +157,14 @@ class GraphReportCard extends StatelessWidget {
             ],
           ),
           const SizedBox(height: 24),
+          // Chart section - displays either a bar chart or a placeholder message.
           SizedBox(
             height: screenHeight * 0.45,
             width: double.infinity,
             child:
                 chartData.isEmpty || chartData.every((element) => element == 0)
-                    ? Center(
+                    ? // Display placeholder when no data is available.
+                    Center(
                       child: Column(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
@@ -145,10 +192,12 @@ class GraphReportCard extends StatelessWidget {
                         ],
                       ),
                     )
-                    : BarChart(
+                    : // Display the bar chart when data is available.
+                    BarChart(
                       BarChartData(
                         maxY: maxY,
                         minY: 0,
+                        // Configure touch interactions and tooltips.
                         barTouchData: BarTouchData(
                           enabled: true,
                           touchTooltipData: BarTouchTooltipData(
@@ -169,7 +218,9 @@ class GraphReportCard extends StatelessWidget {
                             },
                           ),
                         ),
+                        // Configure axis titles and labels.
                         titlesData: FlTitlesData(
+                          // Left axis (Y-axis) showing spending amounts.
                           leftTitles: AxisTitles(
                             sideTitles: SideTitles(
                               showTitles: true,
@@ -190,6 +241,7 @@ class GraphReportCard extends StatelessWidget {
                               },
                             ),
                           ),
+                          // Bottom axis (X-axis) showing time labels.
                           bottomTitles: AxisTitles(
                             sideTitles: SideTitles(
                               showTitles: true,
@@ -212,6 +264,7 @@ class GraphReportCard extends StatelessWidget {
                               },
                             ),
                           ),
+                          // Hide right and top axis titles.
                           rightTitles: AxisTitles(
                             sideTitles: SideTitles(showTitles: false),
                           ),
@@ -219,6 +272,7 @@ class GraphReportCard extends StatelessWidget {
                             sideTitles: SideTitles(showTitles: false),
                           ),
                         ),
+                        // Configure grid lines.
                         gridData: FlGridData(
                           show: true,
                           drawVerticalLine: false,
@@ -231,12 +285,14 @@ class GraphReportCard extends StatelessWidget {
                               ),
                         ),
                         borderData: FlBorderData(show: false),
+                        // Generate bar chart data with highlighting for the highest value.
                         barGroups: List.generate(chartData.length, (index) {
                           return BarChartGroupData(
                             x: index,
                             barRods: [
                               BarChartRodData(
                                 toY: chartData[index],
+                                // Highlight the bar with the highest value in black.
                                 color:
                                     index == highlightIndex
                                         ? Colors.black
