@@ -1,3 +1,4 @@
+import 'package:budgetbuddy_project/screens/authorization_pages/login.dart';
 import 'package:budgetbuddy_project/screens/profile_page/about.dart';
 import 'package:budgetbuddy_project/screens/profile_page/helpsupport.dart';
 import 'package:budgetbuddy_project/screens/profile_page/notification.dart';
@@ -6,8 +7,6 @@ import 'package:budgetbuddy_project/services/local_storage_service.dart';
 import 'package:budgetbuddy_project/services/service_locator.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
-
-import 'login.dart';
 
 class ProfilePage extends StatelessWidget {
   const ProfilePage({super.key});

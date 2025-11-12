@@ -4,6 +4,7 @@ import 'package:budgetbuddy_project/services/service_locator.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'signup.dart';
+import 'forgot_password.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -28,38 +29,49 @@ class LoginScreenState extends State<LoginScreen> {
   }
 
   void _login() async {
-    if (_formKey.currentState!.validate()) {
+  if (_formKey.currentState!.validate()) {
+    setState(() {
+      _isLoading = true;
+    });
+
+    final email = _emailController.text.trim();
+    final password = _passwordController.text.trim();
+
+    // Call your local verification function
+    final bool success = await storage.verifyOfflineLogin(email, password);
+
+    if (mounted) {
       setState(() {
-        _isLoading = true;
+        _isLoading = false;
       });
 
-      // Simulate API call
-      await Future.delayed(Duration(seconds: 2));
+      if (success) {
+        // ✅ Successful login
+        await storage.setLoggedIn(true);
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Login successful!'),
+            backgroundColor: Colors.green,
+          ),
+        );
 
-      if (mounted) {
-        setState(() {
-          _isLoading = false;
-        });
-
-        // Simple validation (replace with actual authentication)
-        if (_emailController.text == 'user@example.com' &&
-            _passwordController.text == 'password123') {
-          storage.setLoggedIn(true);
-          Navigator.pushReplacement(
-            context,
-            MaterialPageRoute(builder: (context) => HomeScreen()),
-          );
-        } else {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text('Invalid email or password'),
-              backgroundColor: Colors.red,
-            ),
-          );
-        }
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (context) => const HomeScreen()),
+        );
+      } else {
+        // ❌ Invalid credentials warning
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Incorrect username or password.'),
+            backgroundColor: Colors.red,
+          ),
+        );
       }
     }
   }
+}
+
 
   @override
   Widget build(BuildContext context) {
@@ -180,11 +192,10 @@ class LoginScreenState extends State<LoginScreen> {
                         tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                       ),
                       onPressed: () {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(
-                            content: Text(
-                              'Forgot password feature not implemented',
-                            ),
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => ForgotPasswordScreen(),
                           ),
                         );
                       },
