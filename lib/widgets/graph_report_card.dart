@@ -201,7 +201,6 @@ class GraphReportCard extends StatelessWidget {
                         barTouchData: BarTouchData(
                           enabled: true,
                           touchTooltipData: BarTouchTooltipData(
-                            tooltipBgColor: Colors.black,
                             getTooltipItem: (group, groupIndex, rod, rodIndex) {
                               final dateText =
                                   chartDates.length > group.x

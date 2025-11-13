@@ -1,97 +1,106 @@
-import 'package:budgetbuddy_project/models/transaction_model.dart';
-import 'package:budgetbuddy_project/services/local_storage_service.dart';
-import 'package:budgetbuddy_project/services/service_locator.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import '../models/transaction_model.dart';
 
 class TransactionServices {
-  final LocalStorageService _localStorageService = locator<LocalStorageService>();
-  
-  // Get all transactions
+  final _db = FirebaseFirestore.instance;
+  final _auth = FirebaseAuth.instance;
+
+  String get _uid {
+    final u = _auth.currentUser;
+    if (u == null) throw Exception('Not authenticated');
+    return u.uid;
+  }
+
+  DocumentReference<Map<String, dynamic>> get _userDoc =>
+      _db.collection('users').doc(_uid);
+  CollectionReference<Map<String, dynamic>> get _txCol =>
+      _userDoc.collection('transactions');
+
+  // Create transaction and apply balance in a single transaction
+  Future<void> addTransaction(TransactionModel tx, {String? categoryId}) async {
+    final signedAmount = tx.amount; // positive for income, negative for expense
+    final txRef = _txCol.doc();
+
+    await _db.runTransaction((txn) async {
+      final userSnap = await txn.get(_userDoc);
+      if (!userSnap.exists) {
+        throw Exception('User not found');
+      }
+      final currentBalance = (userSnap.data()?['balance'] ?? 0).toDouble();
+
+      txn.set(txRef, {
+        'amount': tx.amount.abs(),
+        'type': tx.amount >= 0 ? 'income' : 'expense',
+        'categoryId':
+            categoryId ?? tx.category, // keep category name as id for now
+        'categoryName': tx.category,
+        'description': tx.description,
+        'txDate': Timestamp.fromDate(tx.date),
+        'createdAt': FieldValue.serverTimestamp(),
+      });
+
+      txn.update(_userDoc, {
+        'balance': currentBalance + signedAmount,
+        'updatedAt': FieldValue.serverTimestamp(),
+      });
+    });
+  }
+
   Future<List<TransactionModel>> getAllTransactions() async {
-    final allTransactions = _localStorageService.getTransactions();
-    return allTransactions ?? [];
+    final qs = await _txCol.orderBy('txDate', descending: true).get();
+    return qs.docs.map(_toModel).toList();
   }
-  
-  // Get all inflow transactions (positive amounts)
+
   Future<List<TransactionModel>> getInflow() async {
-    final allTransactions = _localStorageService.getTransactions();
-    return allTransactions?.where((t) => t.amount > 0).toList() ?? [];
+    final qs = await _txCol.where('type', isEqualTo: 'income').get();
+    return qs.docs.map(_toModel).toList();
   }
 
-  // Get all outflow transactions (negative amounts)
   Future<List<TransactionModel>> getOutflow() async {
-    final allTransactions = _localStorageService.getTransactions();
-    return allTransactions?.where((t) => t.amount < 0).toList() ?? [];
+    final qs = await _txCol.where('type', isEqualTo: 'expense').get();
+    return qs.docs.map(_toModel).toList();
   }
 
-  // Add a new transaction
-  Future<void> addTransaction(TransactionModel transaction) async {
-    final current = _localStorageService.getTransactions() ?? [];
-    await _localStorageService.saveTransactions([...current, transaction]);
-  }
-
-  // Get transactions by category
-  Future<List<TransactionModel>> getTransactionByCategory(String category) async {
-    final transactions = _localStorageService.getTransactions();
-    return transactions?.where((t) => t.category == category).toList() ?? [];
-  }
-
-  // Delete a transaction
-  Future<void> deleteTransaction(TransactionModel transaction) async {
-    final current = _localStorageService.getTransactions() ?? [];
-    current.removeWhere((t) => 
-      t.date == transaction.date && 
-      t.amount == transaction.amount && 
-      t.category == transaction.category
-    );
-    await _localStorageService.saveTransactions(current);
-  }
-
-  // Update a transaction
-  Future<void> updateTransaction(
-    TransactionModel oldTransaction, 
-    TransactionModel newTransaction
+  Future<List<TransactionModel>> getTransactionByCategory(
+    String categoryName,
   ) async {
-    final current = _localStorageService.getTransactions() ?? [];
-    final index = current.indexWhere((t) => 
-      t.date == oldTransaction.date && 
-      t.amount == oldTransaction.amount && 
-      t.category == oldTransaction.category
-    );
-    
-    if (index != -1) {
-      current[index] = newTransaction;
-      await _localStorageService.saveTransactions(current);
-    }
+    final qs =
+        await _txCol
+            .where('categoryName', isEqualTo: categoryName)
+            .orderBy('txDate', descending: true)
+            .get();
+    return qs.docs.map(_toModel).toList();
   }
 
-  // Get transactions within a date range
   Future<List<TransactionModel>> getTransactionsByDateRange(
-    DateTime startDate, 
-    DateTime endDate
+    DateTime startDate,
+    DateTime endDate,
   ) async {
-    final allTransactions = _localStorageService.getTransactions();
-    return allTransactions?.where((t) => 
-      t.date.isAfter(startDate.subtract(const Duration(days: 1))) &&
-      t.date.isBefore(endDate.add(const Duration(days: 1)))
-    ).toList() ?? [];
+    final qs =
+        await _txCol
+            .where(
+              'txDate',
+              isGreaterThanOrEqualTo: Timestamp.fromDate(startDate),
+            )
+            .where('txDate', isLessThanOrEqualTo: Timestamp.fromDate(endDate))
+            .orderBy('txDate', descending: true)
+            .get();
+    return qs.docs.map(_toModel).toList();
   }
 
-  // Get total income
-  Future<double> getTotalIncome() async {
-    final allTransactions = _localStorageService.getTransactions();
-    final inflow = allTransactions?.where((t) => t.amount > 0).toList() ?? [];
-    return inflow.fold<double>(0.0, (double sum, transaction) => sum + transaction.amount);
-  }
+  // Optional: update/delete helpers with balance delta if you add id into TransactionModel
+  // For now, your model lacks an id, so we leave them out or you can add an id field.
 
-  // Get total expenses
-  Future<double> getTotalExpenses() async {
-    final allTransactions = _localStorageService.getTransactions();
-    final outflow = allTransactions?.where((t) => t.amount < 0).toList() ?? [];
-    return outflow.fold<double>(0.0, (double sum, transaction) => sum + transaction.amount.abs());
-  }
-
-  // Clear all transactions (useful for testing or reset)
-  Future<void> clearAllTransactions() async {
-    await _localStorageService.saveTransactions([]);
+  TransactionModel _toModel(QueryDocumentSnapshot<Map<String, dynamic>> d) {
+    final data = d.data();
+    final amount = (data['amount'] ?? 0).toDouble();
+    final isIncome = (data['type'] ?? 'expense') == 'income';
+    return TransactionModel(
+      amount: isIncome ? amount : -amount,
+      description: (data['description'] ?? '') as String,
+      category: (data['categoryName'] ?? '') as String,
+      date: (data['txDate'] as Timestamp).toDate(),
+    );
   }
 }

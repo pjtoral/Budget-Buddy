@@ -83,7 +83,7 @@ class _TopUpPageState extends State<TopUpPage> {
     );
 
     await _transactionServices.addTransaction(transaction);
-    await _balanceService.updateBalance(amount);
+    // await _balanceService.updateBalance(amount);
 
     widget.onConfirm(amount);
     Navigator.of(context).pop();
