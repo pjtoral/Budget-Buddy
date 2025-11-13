@@ -117,7 +117,7 @@ class _DeductPageState extends State<DeductPage> {
 
     // Save transaction and update balance
     await _transactionServices.addTransaction(transaction);
-    await _balanceService.deductBalance(amount);
+    // await _balanceService.deductBalance(amount);
 
     // Notify parent and close
     widget.onConfirm(-amount);
