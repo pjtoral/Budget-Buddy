@@ -7,7 +7,6 @@ import 'package:budgetbuddy_project/models/transaction_model.dart';
 import 'package:budgetbuddy_project/widgets/profile_card.dart';
 import 'package:budgetbuddy_project/widgets/transactions_summary_card.dart';
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
 import 'package:budgetbuddy_project/widgets/balance_card.dart';
 import 'package:budgetbuddy_project/widgets/graph_report_card.dart';
 
