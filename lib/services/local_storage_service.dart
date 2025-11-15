@@ -1,9 +1,12 @@
 import 'dart:convert';
 
 import 'package:budgetbuddy_project/models/transaction_model.dart';
+import 'package:crypto/crypto.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class LocalStorageService {
+  final _securestorage = const FlutterSecureStorage();
   static SharedPreferences? _prefs;
 
   static Future<void> init() async {
@@ -93,5 +96,32 @@ class LocalStorageService {
     return null;
   }
 
+  //hashing saved passwords when logged in once online
+  String hashPassword(String password) {
+    final bytes = utf8.encode(password);
+    final hash = sha256.convert(bytes);
+    return hash.toString();
+  }
+
+  //Saves usercredentials when logged in once online
+  Future<void> saveUserCredentials(String email, String password, String username) async {
+    final hashedpassword = hashPassword(password);
+    await _securestorage.write(key: 'username', value: username);
+    await _securestorage.write(key: 'email', value: email);
+    await _securestorage.write(key: 'password_hash', value: hashedpassword);
+  }
+
+  //To verify credentials offline
+  Future<bool> verifyOfflineLogin(String email, String password) async {
+    final storedEmail = await _securestorage.read(key: 'email');
+    final storedHash = await _securestorage.read(key: 'password_hash');
+
+    if(storedEmail == null || storedHash == null) return false;
+
+    final inputHash = hashPassword(password);
+    return storedEmail == email && storedHash == inputHash;
+  }
+
+ 
   Future<void> clearAll() async => _prefs?.clear();
 }

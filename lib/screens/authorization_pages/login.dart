@@ -6,6 +6,7 @@ import 'package:budgetbuddy_project/services/category_service.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'signup.dart';
+import 'forgot_password.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -30,124 +31,50 @@ class LoginScreenState extends State<LoginScreen> {
     super.dispose();
   }
 
-  Future<void> _login() async {
-    if (!(_formKey.currentState?.validate() ?? false)) return;
-
+  void _login() async {
+  if (_formKey.currentState!.validate()) {
     setState(() {
       _isLoading = true;
     });
 
-    try {
-      final user = await _authService.signInWithEmail(
-        _emailController.text.trim(),
-        _passwordController.text,
-      );
+    final email = _emailController.text.trim();
+    final password = _passwordController.text.trim();
 
-      if (!mounted) return;
+    // Call your local verification function
+    final bool success = await storage.verifyOfflineLogin(email, password);
 
-      if (user != null) {
-        // Sync categories from Firestore to local cache
-        await locator<CategoryService>().syncCategoriesToLocal();
+    if (mounted) {
+      setState(() {
+        _isLoading = false;
+      });
 
-        // Mark user as logged in
+      if (success) {
+        // ✅ Successful login
         await storage.setLoggedIn(true);
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Login successful!'),
+            backgroundColor: Colors.green,
+          ),
+        );
 
-        if (!mounted) return;
-
-        // Navigate to home screen
         Navigator.pushReplacement(
           context,
-          MaterialPageRoute(builder: (context) => HomeScreen()),
+          MaterialPageRoute(builder: (context) => const HomeScreen()),
+        );
+      } else {
+        // ❌ Invalid credentials warning
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Incorrect username or password.'),
+            backgroundColor: Colors.red,
+          ),
         );
       }
-    } catch (e) {
-      if (!mounted) return;
-
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(
-            e.toString().replaceAll('Exception: ', ''),
-            style: GoogleFonts.inter(),
-          ),
-          backgroundColor: Colors.red,
-        ),
-      );
-    } finally {
-      if (mounted) {
-        setState(() {
-          _isLoading = false;
-        });
-      }
     }
   }
+}
 
-  Future<void> _handleForgotPassword() async {
-    final email = _emailController.text.trim();
-
-    if (email.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(
-            'Please enter your email address first',
-            style: GoogleFonts.inter(),
-          ),
-          backgroundColor: Colors.orange,
-        ),
-      );
-      return;
-    }
-
-    if (!RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$').hasMatch(email)) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(
-            'Please enter a valid email address',
-            style: GoogleFonts.inter(),
-          ),
-          backgroundColor: Colors.orange,
-        ),
-      );
-      return;
-    }
-
-    setState(() {
-      _isLoading = true;
-    });
-
-    try {
-      await _authService.sendPasswordResetEmail(email);
-
-      if (!mounted) return;
-
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(
-            'Password reset email sent! Check your inbox.',
-            style: GoogleFonts.inter(),
-          ),
-          backgroundColor: Colors.green,
-        ),
-      );
-    } catch (e) {
-      if (!mounted) return;
-
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(
-            e.toString().replaceAll('Exception: ', ''),
-            style: GoogleFonts.inter(),
-          ),
-          backgroundColor: Colors.red,
-        ),
-      );
-    } finally {
-      if (mounted) {
-        setState(() {
-          _isLoading = false;
-        });
-      }
-    }
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -267,7 +194,14 @@ class LoginScreenState extends State<LoginScreen> {
                         minimumSize: Size(0, 0),
                         tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                       ),
-                      onPressed: _isLoading ? null : _handleForgotPassword,
+                      onPressed: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => ForgotPasswordScreen(),
+                          ),
+                        );
+                      },
                       child: Text(
                         'Forgot Password?',
                         style: GoogleFonts.inter(
