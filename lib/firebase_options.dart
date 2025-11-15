@@ -85,4 +85,5 @@ class DefaultFirebaseOptions {
     storageBucket: 'budget-buddy-eec37.firebasestorage.app',
     measurementId: 'G-TT9YKWM124',
   );
+
 }

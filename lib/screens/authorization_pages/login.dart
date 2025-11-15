@@ -1,6 +1,8 @@
 import 'package:budgetbuddy_project/widgets/navigation_bar.dart';
 import 'package:budgetbuddy_project/services/local_storage_service.dart';
 import 'package:budgetbuddy_project/services/service_locator.dart';
+import 'package:budgetbuddy_project/services/auth_service.dart';
+import 'package:budgetbuddy_project/services/category_service.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'signup.dart';
@@ -14,7 +16,8 @@ class LoginScreen extends StatefulWidget {
 }
 
 class LoginScreenState extends State<LoginScreen> {
-  LocalStorageService storage = locator<LocalStorageService>();
+  final LocalStorageService storage = locator<LocalStorageService>();
+  final AuthService _authService = AuthService();
   final _formKey = GlobalKey<FormState>();
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
@@ -223,10 +226,18 @@ class LoginScreenState extends State<LoginScreen> {
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(12),
                         ),
+                        disabledBackgroundColor: Colors.black.withOpacity(0.6),
                       ),
                       child:
                           _isLoading
-                              ? CircularProgressIndicator(color: Colors.white)
+                              ? SizedBox(
+                                width: 20,
+                                height: 20,
+                                child: CircularProgressIndicator(
+                                  color: Colors.white,
+                                  strokeWidth: 2,
+                                ),
+                              )
                               : Text(
                                 'Login',
                                 style: GoogleFonts.inter(
@@ -240,12 +251,17 @@ class LoginScreenState extends State<LoginScreen> {
 
                   // Sign Up
                   TextButton(
-                    onPressed: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(builder: (context) => SignUpScreen()),
-                      );
-                    },
+                    onPressed:
+                        _isLoading
+                            ? null
+                            : () {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (context) => SignUpScreen(),
+                                ),
+                              );
+                            },
                     child: RichText(
                       text: TextSpan(
                         text: "Don't have an account? ",
