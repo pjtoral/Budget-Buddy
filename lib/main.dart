@@ -6,16 +6,11 @@ import 'package:budgetbuddy_project/screens/transactions_page/transaction_page.d
 import 'package:budgetbuddy_project/screens/analytics_page/analytics_page.dart';
 import 'package:budgetbuddy_project/services/local_storage_service.dart';
 import 'package:budgetbuddy_project/services/service_locator.dart';
-import 'package:firebase_core/firebase_core.dart';
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
-import 'firebase_options.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  // await Firebase.initializeApp(
-  //   options: DefaultFirebaseOptions.currentPlatform,
-  // );
+  await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
   setupLocator();
   await LocalStorageService.init();
   runApp(const MyApp());
@@ -52,25 +47,27 @@ class _MyAppState extends State<MyApp> {
     return MaterialApp(
       title: 'Budget Buddy',
       theme: ThemeData(primarySwatch: Colors.blue),
-      home: loggedIn
-          ? HomePage(
-              onSeeMoreTap: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) => const TransactionsPage(),
-                  ),
-                );
-              },
-              onAnalyticsTap: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) => const AnalyticsPage(),
-                  ),
-                );
-              },
-            )
-          : const LoginScreen(),
-    );  }
+      home:
+          loggedIn
+              ? HomePage(
+                onSeeMoreTap: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => const TransactionsPage(),
+                    ),
+                  );
+                },
+                onAnalyticsTap: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => const AnalyticsPage(),
+                    ),
+                  );
+                },
+              )
+              : const LoginScreen(),
+    );
+  }
 }
