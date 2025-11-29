@@ -56,7 +56,7 @@ class AuthService {
   // Future<User?> signInWithGoogle() async {
   //   try {
   //     // Mobile/Desktop Google Sign-In
-  //     final googleUser = await GoogleSignIn().signIn();
+  //    // final googleUser = await GoogleSignIn().signIn();
   //     if (googleUser == null) return null;
   //     final googleAuth = await googleUser.authentication;
 
@@ -80,16 +80,16 @@ class AuthService {
     }
   }
 
-  // Future<void> signOut() async {
-  //   try {
-  //     try {
-  //       await GoogleSignIn().signOut();
-  //     } catch (_) {}
-  //     await _auth.signOut();
-  //   } catch (e) {
-  //     rethrow;
-  //   }
-  // }
+  Future<void> signOut() async {
+    try {
+      try {
+        await GoogleSignIn.instance.signOut();
+      } catch (_) {}
+      await _auth.signOut();
+    } catch (e) {
+      rethrow;
+    }
+  }
 
   Future<void> _ensureUserDoc(
     User? user, {
