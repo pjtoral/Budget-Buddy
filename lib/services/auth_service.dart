@@ -53,24 +53,24 @@ class AuthService {
     }
   }
 
-  Future<User?> signInWithGoogle() async {
-    try {
-      // Mobile/Desktop Google Sign-In
-      final googleUser = await GoogleSignIn().signIn();
-      if (googleUser == null) return null;
-      final googleAuth = await googleUser.authentication;
+  // Future<User?> signInWithGoogle() async {
+  //   try {
+  //     // Mobile/Desktop Google Sign-In
+  //     final googleUser = await GoogleSignIn().signIn();
+  //     if (googleUser == null) return null;
+  //     final googleAuth = await googleUser.authentication;
 
-      final credential = GoogleAuthProvider.credential(
-        idToken: googleAuth.idToken,
-        accessToken: googleAuth.accessToken,
-      );
-      final cred = await _auth.signInWithCredential(credential);
-      await _ensureUserDoc(cred.user);
-      return cred.user;
-    } on FirebaseAuthException catch (e) {
-      throw Exception(_friendly(e));
-    }
-  }
+  //     final credential = GoogleAuthProvider.credential(
+  //       idToken: googleAuth.idToken,
+  //       accessToken: googleAuth.accessToken,
+  //     );
+  //     final cred = await _auth.signInWithCredential(credential);
+  //     await _ensureUserDoc(cred.user);
+  //     return cred.user;
+  //   } on FirebaseAuthException catch (e) {
+  //     throw Exception(_friendly(e));
+  //   }
+  // }
 
   Future<void> sendPasswordResetEmail(String email) async {
     try {
@@ -80,16 +80,16 @@ class AuthService {
     }
   }
 
-  Future<void> signOut() async {
-    try {
-      try {
-        await GoogleSignIn().signOut();
-      } catch (_) {}
-      await _auth.signOut();
-    } catch (e) {
-      rethrow;
-    }
-  }
+  // Future<void> signOut() async {
+  //   try {
+  //     try {
+  //       await GoogleSignIn().signOut();
+  //     } catch (_) {}
+  //     await _auth.signOut();
+  //   } catch (e) {
+  //     rethrow;
+  //   }
+  // }
 
   Future<void> _ensureUserDoc(
     User? user, {
