@@ -10,14 +10,20 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
-  google_sign_in: ^6.2.1
-  shared_preferences: ^2.5.3
   google_fonts: ^6.2.1
   cupertino_icons: ^1.0.8
   intl: ^0.18.1
   get_it: ^8.0.3
   auto_size_text: ^3.0.0
+
+  # Firebase packages
+  firebase_core: ^4.2.1
+  firebase_auth: ^6.1.2
+  cloud_firestore: ^6.1.0
   cloud_functions: ^6.0.4
+  google_sign_in: ^7.2.0
+  google_sign_in_ios: ^6.2.4
+
   crypto: ^3.0.3
   flutter_secure_storage: ^9.0.0
   fl_chart: ^0.66.2
