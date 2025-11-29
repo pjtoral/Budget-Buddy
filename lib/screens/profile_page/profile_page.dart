@@ -31,37 +31,35 @@ class _ProfilePageState extends State<ProfilePage> {
     final user = FirebaseAuth.instance.currentUser;
     if (user != null) {
       try {
-        final userDoc = await FirebaseFirestore.instance
-            .collection('users')
-            .doc(user.uid)
-            .get();
-        
+        final userDoc =
+            await FirebaseFirestore.instance
+                .collection('users')
+                .doc(user.uid)
+                .get();
+
         if (userDoc.exists) {
           final data = userDoc.data();
           setState(() {
-            _username = data?['username'] ?? 
-                       user.displayName ?? 
-                       user.email?.split('@')[0] ?? 
-                       'John Doe';
-            _email = data?['email'] ?? 
-                    user.email ?? 
-                    'john.doe@example.com';
+            _username =
+                data?['username'] ??
+                user.displayName ??
+                user.email?.split('@')[0] ??
+                'John Doe';
+            _email = data?['email'] ?? user.email ?? 'john.doe@example.com';
           });
         } else {
           // Fallback to Firebase Auth data
           setState(() {
-            _username = user.displayName ?? 
-                       user.email?.split('@')[0] ?? 
-                       'John Doe';
+            _username =
+                user.displayName ?? user.email?.split('@')[0] ?? 'John Doe';
             _email = user.email ?? 'john.doe@example.com';
           });
         }
       } catch (e) {
         // Fallback to Firebase Auth data on error
         setState(() {
-          _username = user.displayName ?? 
-                     user.email?.split('@')[0] ?? 
-                     'John Doe';
+          _username =
+              user.displayName ?? user.email?.split('@')[0] ?? 'John Doe';
           _email = user.email ?? 'john.doe@example.com';
         });
       }
