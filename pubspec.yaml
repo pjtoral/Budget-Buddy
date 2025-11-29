@@ -22,7 +22,7 @@ dependencies:
   cloud_firestore: ^6.1.0
   cloud_functions: ^6.0.4
   google_sign_in: ^7.2.0
-  google_sign_in_ios: ^6.2.4
+  google_sign_in_ios: ^6.2.1
 
   crypto: ^3.0.3
   flutter_secure_storage: ^9.0.0
