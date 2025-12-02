@@ -9,6 +9,8 @@ import 'package:budgetbuddy_project/widgets/transactions_summary_card.dart';
 import 'package:flutter/material.dart';
 import 'package:budgetbuddy_project/widgets/balance_card.dart';
 import 'package:budgetbuddy_project/widgets/graph_report_card.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 
 class HomePage extends StatefulWidget {
   final VoidCallback onSeeMoreTap;
@@ -35,6 +37,7 @@ class _HomePageState extends State<HomePage>
 
   double _currentBalanceHome = 0.0;
   List<Map<String, dynamic>> _transactionSummaries = [];
+  String _username = 'UserName'; // Default value
 
   // Graph data
   List<double> chartData = [];
@@ -50,6 +53,7 @@ class _HomePageState extends State<HomePage>
     _loadBalance();
     _loadTransactionSummaries();
     _loadGraphData();
+    _loadUserData();
   }
 
   @override
@@ -62,6 +66,43 @@ class _HomePageState extends State<HomePage>
     await _loadBalance();
     await _loadTransactionSummaries();
     await _loadGraphData();
+    await _loadUserData();
+  }
+
+  Future<void> _loadUserData() async {
+    final user = FirebaseAuth.instance.currentUser;
+    if (user != null) {
+      try {
+        final userDoc =
+            await FirebaseFirestore.instance
+                .collection('users')
+                .doc(user.uid)
+                .get();
+
+        if (userDoc.exists) {
+          final data = userDoc.data();
+          setState(() {
+            _username =
+                data?['username'] ??
+                user.displayName ??
+                user.email?.split('@')[0] ??
+                'UserName';
+          });
+        } else {
+          // Fallback to displayName or email
+          setState(() {
+            _username =
+                user.displayName ?? user.email?.split('@')[0] ?? 'UserName';
+          });
+        }
+      } catch (e) {
+        // Fallback to displayName or email on error
+        setState(() {
+          _username =
+              user.displayName ?? user.email?.split('@')[0] ?? 'UserName';
+        });
+      }
+    }
   }
 
   Future<void> _loadBalance() async {
@@ -225,7 +266,6 @@ class _HomePageState extends State<HomePage>
   Widget build(BuildContext context) {
     super.build(context);
     final screenWidth = MediaQuery.of(context).size.width;
-    final screenHeight = MediaQuery.of(context).size.height;
 
     return SafeArea(
       child: SingleChildScrollView(
@@ -236,7 +276,7 @@ class _HomePageState extends State<HomePage>
             children: [
               // Profile Card
               ProfileCard(
-                username: 'UserName',
+                username: _username,
                 avatarAssetPath: 'assets/images/alden.jpg',
               ),
               // Balance Card

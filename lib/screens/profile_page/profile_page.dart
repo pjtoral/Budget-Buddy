@@ -7,9 +7,64 @@ import 'package:budgetbuddy_project/services/local_storage_service.dart';
 import 'package:budgetbuddy_project/services/service_locator.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 
-class ProfilePage extends StatelessWidget {
+class ProfilePage extends StatefulWidget {
   const ProfilePage({super.key});
+
+  @override
+  State<ProfilePage> createState() => _ProfilePageState();
+}
+
+class _ProfilePageState extends State<ProfilePage> {
+  String _username = 'John Doe';
+  String _email = 'john.doe@example.com';
+
+  @override
+  void initState() {
+    super.initState();
+    _loadUserData();
+  }
+
+  Future<void> _loadUserData() async {
+    final user = FirebaseAuth.instance.currentUser;
+    if (user != null) {
+      try {
+        final userDoc =
+            await FirebaseFirestore.instance
+                .collection('users')
+                .doc(user.uid)
+                .get();
+
+        if (userDoc.exists) {
+          final data = userDoc.data();
+          setState(() {
+            _username =
+                data?['username'] ??
+                user.displayName ??
+                user.email?.split('@')[0] ??
+                'John Doe';
+            _email = data?['email'] ?? user.email ?? 'john.doe@example.com';
+          });
+        } else {
+          // Fallback to Firebase Auth data
+          setState(() {
+            _username =
+                user.displayName ?? user.email?.split('@')[0] ?? 'John Doe';
+            _email = user.email ?? 'john.doe@example.com';
+          });
+        }
+      } catch (e) {
+        // Fallback to Firebase Auth data on error
+        setState(() {
+          _username =
+              user.displayName ?? user.email?.split('@')[0] ?? 'John Doe';
+          _email = user.email ?? 'john.doe@example.com';
+        });
+      }
+    }
+  }
 
   Widget _buildProfileOption(
     IconData icon,
@@ -55,14 +110,14 @@ class ProfilePage extends StatelessWidget {
                   ),
                   SizedBox(height: 16),
                   Text(
-                    'John Doe',
+                    _username,
                     style: GoogleFonts.inter(
                       fontSize: 24,
                       fontWeight: FontWeight.bold,
                     ),
                   ),
                   Text(
-                    'john.doe@example.com',
+                    _email,
                     style: GoogleFonts.inter(
                       fontSize: 16,
                       color: Colors.grey[600],
