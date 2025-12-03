@@ -1,8 +1,6 @@
 import 'package:budgetbuddy_project/widgets/navigation_bar.dart';
 import 'package:budgetbuddy_project/services/local_storage_service.dart';
 import 'package:budgetbuddy_project/services/service_locator.dart';
-import 'package:budgetbuddy_project/services/auth_service.dart';
-import 'package:budgetbuddy_project/services/category_service.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'signup.dart';
@@ -17,7 +15,6 @@ class LoginScreen extends StatefulWidget {
 
 class LoginScreenState extends State<LoginScreen> {
   final LocalStorageService storage = locator<LocalStorageService>();
-  final AuthService _authService = AuthService();
   final _formKey = GlobalKey<FormState>();
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
@@ -38,7 +35,7 @@ class LoginScreenState extends State<LoginScreen> {
     });
 
     final email = _emailController.text.trim();
-    final password = _passwordController.text.trim();
+    final password = _passwordController.text;
 
     // Call your local verification function
     final bool success = await storage.verifyOfflineLogin(email, password);
@@ -49,7 +46,6 @@ class LoginScreenState extends State<LoginScreen> {
       });
 
       if (success) {
-        // ✅ Successful login
         await storage.setLoggedIn(true);
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
@@ -63,10 +59,9 @@ class LoginScreenState extends State<LoginScreen> {
           MaterialPageRoute(builder: (context) => const HomeScreen()),
         );
       } else {
-        // ❌ Invalid credentials warning
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
-            content: Text('Incorrect username or password.'),
+            content: Text('Incorrect email or password.'),
             backgroundColor: Colors.red,
           ),
         );

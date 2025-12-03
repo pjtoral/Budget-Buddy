@@ -106,9 +106,15 @@ class LocalStorageService {
   //Saves usercredentials when logged in once online
   Future<void> saveUserCredentials(String email, String password, String username) async {
     final hashedpassword = hashPassword(password);
+    final trimmedEmail = email.trim();
     await _securestorage.write(key: 'username', value: username);
-    await _securestorage.write(key: 'email', value: email);
+    await _securestorage.write(key: 'email', value: trimmedEmail);
     await _securestorage.write(key: 'password_hash', value: hashedpassword);
+    
+    print('DEBUG: Saving credentials:');
+    print('  Email: "$email" (trimmed: "$trimmedEmail")');
+    print('  Username: "$username"');
+    print('  Password Hash: "$hashedpassword"');
   }
 
   //To verify credentials offline
@@ -116,10 +122,32 @@ class LocalStorageService {
     final storedEmail = await _securestorage.read(key: 'email');
     final storedHash = await _securestorage.read(key: 'password_hash');
 
-    if(storedEmail == null || storedHash == null) return false;
+    if(storedEmail == null || storedHash == null) {
+      print('DEBUG: Stored email is null: ${storedEmail == null}, Stored hash is null: ${storedHash == null}');
+      return false;
+    }
 
+    final trimmedInput = email.trim();
     final inputHash = hashPassword(password);
-    return storedEmail == email && storedHash == inputHash;
+    final emailMatch = storedEmail == trimmedInput;
+    final passwordMatch = storedHash == inputHash;
+    
+    print('DEBUG Login verification:');
+    print('  Stored Email: "$storedEmail" vs Input: "$email" (trimmed: "$trimmedInput") => Match: $emailMatch');
+    print('  Stored Hash: "$storedHash"');
+    print('  Input Hash: "$inputHash"');
+    print('  Password Match: $passwordMatch');
+    
+    return emailMatch && passwordMatch;
+  }
+  
+  // Helper method to get stored credentials (for debugging)
+  Future<Map<String, String?>> getStoredCredentials() async {
+    return {
+      'email': await _securestorage.read(key: 'email'),
+      'username': await _securestorage.read(key: 'username'),
+      'password_hash': await _securestorage.read(key: 'password_hash'),
+    };
   }
 
  
