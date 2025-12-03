@@ -33,11 +33,15 @@ class _SignUpScreenState extends State<SignUpScreen> {
     setState(() => _isLoading = true);
 
     try {
+      final email = emailController.text.trim();
+      final password = passwordController.text;
+      final username = usernameController.text.trim();
+
       final user = await AuthService().signUpWithEmail(
-        email: emailController.text.trim(),
-        password: passwordController.text,
-        displayName: usernameController.text.trim(),
-        username: usernameController.text.trim(),
+        email: email,
+        password: password,
+        displayName: username,
+        username: username,
       );
 
       // Optional: hydrate categories cache after sign-up
@@ -45,9 +49,10 @@ class _SignUpScreenState extends State<SignUpScreen> {
 
       if (!mounted) return;
       if (user != null) {
-        // Set logged-in state
+        // Set logged-in state and save credentials for offline login
         final storage = locator<LocalStorageService>();
         await storage.setLoggedIn(true);
+        await storage.saveUserCredentials(email, password, username);
         if (!mounted) return;
         Navigator.of(context).pushReplacement(
           MaterialPageRoute(builder: (context) => const HomeScreen()),
