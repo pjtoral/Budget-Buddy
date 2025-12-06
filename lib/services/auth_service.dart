@@ -80,6 +80,48 @@ class AuthService {
     }
   }
 
+  Future<void> updateUsername(String username) async {
+    try {
+      final user = _auth.currentUser;
+      if (user == null) throw Exception('User not authenticated');
+      
+      // Update display name in Firebase Auth
+      await user.updateDisplayName(username);
+      await user.reload();
+      
+      // Update username in Firestore
+      await _db.collection('users').doc(user.uid).update({
+        'username': username,
+        'displayName': username,
+        'updatedAt': FieldValue.serverTimestamp(),
+      });
+    } catch (e) {
+      throw Exception('Failed to update username: ${e.toString()}');
+    }
+  }
+
+  Future<void> updatePassword(String currentPassword, String newPassword) async {
+    try {
+      final user = _auth.currentUser;
+      if (user == null) throw Exception('User not authenticated');
+      if (user.email == null) throw Exception('User email not found');
+      
+      // Re-authenticate user with current password
+      final credential = EmailAuthProvider.credential(
+        email: user.email!,
+        password: currentPassword,
+      );
+      await user.reauthenticateWithCredential(credential);
+      
+      // Update password
+      await user.updatePassword(newPassword);
+    } on FirebaseAuthException catch (e) {
+      throw Exception(_friendly(e));
+    } catch (e) {
+      throw Exception('Failed to update password: ${e.toString()}');
+    }
+  }
+
   Future<void> signOut() async {
     try {
       try {

@@ -114,22 +114,31 @@ class _GraphReportScreenState extends State<GraphReportScreen> {
 
     final now = DateTime.now();
     DateTime startDate;
+    DateTime endDate;
 
     switch (selectedPeriod) {
       case 'Week':
         startDate = now.subtract(const Duration(days: 7));
+        endDate = now.add(const Duration(days: 1));
         break;
       case 'Month':
-        startDate = DateTime(now.year, now.month - 1, now.day);
+        // Get transactions from 3 months ago to 3 months ahead
+        startDate = DateTime(now.year, now.month - 3, 1);
+        endDate = DateTime(now.year, now.month + 4, 0); // Last day of 3 months ahead
         break;
       case '3 Months':
         startDate = DateTime(now.year, now.month - 3, now.day);
+        endDate = now.add(const Duration(days: 1));
         break;
       default:
         startDate = now.subtract(const Duration(days: 7));
+        endDate = now.add(const Duration(days: 1));
     }
 
-    return allTransactions.where((tx) => tx.date.isAfter(startDate)).toList()
+    return allTransactions
+        .where((tx) => tx.date.isAfter(startDate.subtract(const Duration(days: 1))) &&
+            tx.date.isBefore(endDate))
+        .toList()
       ..sort((a, b) => a.date.compareTo(b.date));
   }
 
@@ -144,32 +153,43 @@ class _GraphReportScreenState extends State<GraphReportScreen> {
     }
 
     for (final transaction in transactions) {
-      final daysAgo = now.difference(transaction.date).inDays;
-      if (daysAgo >= 0 && daysAgo < 7) {
-        final index = 6 - daysAgo;
-        chartData[index] += transaction.amount.abs();
+      // Only count expenses (negative amounts) for spending graph
+      if (transaction.amount < 0) {
+        final daysAgo = now.difference(transaction.date).inDays;
+        if (daysAgo >= 0 && daysAgo < 7) {
+          final index = 6 - daysAgo;
+          chartData[index] += transaction.amount.abs();
+        }
       }
     }
   }
 
   void _generateMonthlyData(List<TransactionModel> transactions, DateTime now) {
-    final daysInMonth = DateTime(now.year, now.month + 1, 0).day;
-    chartData = List.filled(daysInMonth, 0.0);
+    // Show last 3 months, current month, and next 3 months (7 months total)
+    chartData = List.filled(7, 0.0);
     chartLabels = [];
     chartDates = [];
 
-    for (int day = 1; day <= daysInMonth; day++) {
-      chartLabels.add(day.toString());
-      final date = DateTime(now.year, now.month, day);
-      chartDates.add('${_monthName(date.month)} ${date.day}, ${date.year}');
+    // Generate labels for 7 months: 3 past, current, 3 future
+    for (int i = -3; i <= 3; i++) {
+      final targetDate = DateTime(now.year, now.month + i, 1);
+      chartLabels.add(_monthName(targetDate.month).substring(0, 3)); // Short month name
+      chartDates.add('${_monthName(targetDate.month)} ${targetDate.year}');
     }
 
+    // Aggregate transactions by month
     for (final transaction in transactions) {
-      if (transaction.date.month == now.month &&
-          transaction.date.year == now.year) {
-        final dayIndex = transaction.date.day - 1;
-        if (dayIndex >= 0 && dayIndex < chartData.length) {
-          chartData[dayIndex] += transaction.amount.abs();
+      // Only count expenses (negative amounts) for spending graph
+      if (transaction.amount < 0) {
+        final txDate = transaction.date;
+        final monthsDiff = (now.year - txDate.year) * 12 + (now.month - txDate.month);
+        
+        // Check if transaction is within the 7-month range (-3 to +3)
+        if (monthsDiff >= -3 && monthsDiff <= 3) {
+          final index = monthsDiff + 3; // Convert -3..3 to 0..6
+          if (index >= 0 && index < chartData.length) {
+            chartData[index] += transaction.amount.abs();
+          }
         }
       }
     }
@@ -190,10 +210,13 @@ class _GraphReportScreenState extends State<GraphReportScreen> {
     }
 
     for (final transaction in transactions) {
-      final weeksAgo = now.difference(transaction.date).inDays ~/ 7;
-      if (weeksAgo >= 0 && weeksAgo < 12) {
-        final index = 11 - weeksAgo;
-        chartData[index] += transaction.amount.abs();
+      // Only count expenses (negative amounts) for spending graph
+      if (transaction.amount < 0) {
+        final weeksAgo = now.difference(transaction.date).inDays ~/ 7;
+        if (weeksAgo >= 0 && weeksAgo < 12) {
+          final index = 11 - weeksAgo;
+          chartData[index] += transaction.amount.abs();
+        }
       }
     }
   }
@@ -265,8 +288,10 @@ class _GraphReportScreenState extends State<GraphReportScreen> {
       final weekStart = now.subtract(const Duration(days: 6));
       return '${_monthName(weekStart.month)} ${weekStart.day}, ${weekStart.year} - ${_monthName(now.month)} ${now.day}, ${now.year}';
     } else if (selectedPeriod == 'Month') {
-      final monthStart = DateTime(now.year, now.month, 1);
-      return '${_monthName(monthStart.month)} ${monthStart.day}, ${monthStart.year} - ${_monthName(now.month)} ${now.day}, ${now.year}';
+      // Show range for last 3 months to next 3 months
+      final startDate = DateTime(now.year, now.month - 3, 1);
+      final endDate = DateTime(now.year, now.month + 3, 1);
+      return '${_monthName(startDate.month)} ${startDate.year} - ${_monthName(endDate.month)} ${endDate.year}';
     } else {
       final quarterStart = DateTime(now.year, now.month - 3, now.day);
       return '${_monthName(quarterStart.month)} ${quarterStart.day}, ${quarterStart.year} - ${_monthName(now.month)} ${now.day}, ${now.year}';

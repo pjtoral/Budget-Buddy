@@ -1,5 +1,4 @@
 import 'package:budgetbuddy_project/common/string_helpers.dart';
-import 'package:budgetbuddy_project/services/balance_service.dart';
 import 'package:budgetbuddy_project/services/service_locator.dart';
 import 'package:budgetbuddy_project/services/transaction_services.dart';
 import 'package:budgetbuddy_project/services/local_storage_service.dart';
@@ -35,7 +34,6 @@ class _HomePageState extends State<HomePage>
   final LocalStorageService _localStorageService =
       locator<LocalStorageService>();
 
-  double _currentBalanceHome = 0.0;
   List<Map<String, dynamic>> _transactionSummaries = [];
   String _username = 'UserName'; // Default value
 
@@ -50,7 +48,6 @@ class _HomePageState extends State<HomePage>
   @override
   void initState() {
     super.initState();
-    _loadBalance();
     _loadTransactionSummaries();
     _loadGraphData();
     _loadUserData();
@@ -63,7 +60,6 @@ class _HomePageState extends State<HomePage>
   }
 
   Future<void> _refreshData() async {
-    await _loadBalance();
     await _loadTransactionSummaries();
     await _loadGraphData();
     await _loadUserData();
@@ -105,13 +101,6 @@ class _HomePageState extends State<HomePage>
     }
   }
 
-  Future<void> _loadBalance() async {
-    final balanceService = locator<BalanceService>();
-    final balance = await balanceService.getBalance();
-    setState(() {
-      _currentBalanceHome = balance;
-    });
-  }
 
   Future<void> _loadTransactionSummaries() async {
     final allTransactions = <TransactionModel>[];
@@ -227,10 +216,13 @@ class _HomePageState extends State<HomePage>
     }
 
     for (final transaction in transactions) {
-      final daysAgo = now.difference(transaction.date).inDays;
-      if (daysAgo >= 0 && daysAgo < 7) {
-        final index = 6 - daysAgo;
-        chartData[index] += transaction.amount.abs();
+      // Only count expenses (negative amounts) for spending graph
+      if (transaction.amount < 0) {
+        final daysAgo = now.difference(transaction.date).inDays;
+        if (daysAgo >= 0 && daysAgo < 7) {
+          final index = 6 - daysAgo;
+          chartData[index] += transaction.amount.abs();
+        }
       }
     }
 
@@ -277,7 +269,6 @@ class _HomePageState extends State<HomePage>
               // Profile Card
               ProfileCard(
                 username: _username,
-                avatarAssetPath: 'assets/images/alden.jpg',
               ),
               // Balance Card
               const BalanceCard(),
