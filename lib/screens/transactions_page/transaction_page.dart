@@ -28,13 +28,23 @@ class _TransactionsPageState extends State<TransactionsPage> {
   final LocalStorageService _localStorageService =
       locator<LocalStorageService>();
 
-  String _selectedCategory = 'All';
-  List<String> _categories = ['All'];
+    String _selectedCategory = 'All';
+    List<String> _categories = ['All'];
+
+    // Search
+    final TextEditingController _searchController = TextEditingController();
+    String _searchQuery = '';
 
   @override
   void initState() {
     super.initState();
     _loadCategories();
+  }
+
+  @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
   }
 
   Future<void> _loadCategories() async {
@@ -67,12 +77,49 @@ class _TransactionsPageState extends State<TransactionsPage> {
         }
       }
 
-      return allTransactions..sort((a, b) => b.date.compareTo(a.date));
+      // Apply search filtering if present
+      var results = allTransactions;
+      final q = _searchQuery.trim().toLowerCase();
+      if (q.isNotEmpty) {
+        results = results.where((tx) {
+          final desc = tx.description.toLowerCase();
+          final cat = tx.category.toLowerCase();
+          if (desc.contains(q) || cat.contains(q)) return true;
+          // Allow keyword searches for common intents
+          if ((q.contains('top') || q.contains('income') || q.contains('inflow')) && tx.amount > 0) return true;
+          if ((q.contains('expense') || q.contains('spend') || q.contains('outflow')) && tx.amount < 0) return true;
+          // Match numeric values (e.g., "100") against amount
+          final numeric = double.tryParse(q.replaceAll(RegExp('[^0-9.]'), ''));
+          if (numeric != null) {
+            if (tx.amount.abs() == numeric) return true;
+          }
+          return false;
+        }).toList();
+      }
+
+      return results..sort((a, b) => b.date.compareTo(a.date));
     } else {
       final transactions = await _transactionServices.getTransactionByCategory(
         _selectedCategory,
       );
-      return transactions..sort((a, b) => b.date.compareTo(a.date));
+      final q = _searchQuery.trim().toLowerCase();
+      var results = transactions;
+      if (q.isNotEmpty) {
+        results = results.where((tx) {
+          final desc = tx.description.toLowerCase();
+          final cat = tx.category.toLowerCase();
+          if (desc.contains(q) || cat.contains(q)) return true;
+          if ((q.contains('top') || q.contains('income') || q.contains('inflow')) && tx.amount > 0) return true;
+          if ((q.contains('expense') || q.contains('spend') || q.contains('outflow')) && tx.amount < 0) return true;
+          final numeric = double.tryParse(q.replaceAll(RegExp('[^0-9.]'), ''));
+          if (numeric != null) {
+            if (tx.amount.abs() == numeric) return true;
+          }
+          return false;
+        }).toList();
+      }
+
+      return results..sort((a, b) => b.date.compareTo(a.date));
     }
   }
 
@@ -155,9 +202,26 @@ class _TransactionsPageState extends State<TransactionsPage> {
               Padding(
                 padding: const EdgeInsets.all(_verticalPadding),
                 child: TextField(
+                  controller: _searchController,
+                  onChanged: (v) {
+                    setState(() {
+                      _searchQuery = v;
+                    });
+                  },
                   decoration: InputDecoration(
-                    hintText: 'History',
+                    hintText: 'Search transactions (description, category, "top up", "expense")',
                     prefixIcon: const Icon(Icons.search),
+                    suffixIcon: _searchQuery.isNotEmpty
+                        ? IconButton(
+                            icon: const Icon(Icons.clear),
+                            onPressed: () {
+                              _searchController.clear();
+                              setState(() {
+                                _searchQuery = '';
+                              });
+                            },
+                          )
+                        : null,
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(12),
                       borderSide: BorderSide.none,
