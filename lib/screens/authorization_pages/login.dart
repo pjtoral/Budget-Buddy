@@ -1,8 +1,10 @@
 import 'package:budgetbuddy_project/widgets/navigation_bar.dart';
 import 'package:budgetbuddy_project/services/local_storage_service.dart';
 import 'package:budgetbuddy_project/services/service_locator.dart';
+import 'package:budgetbuddy_project/services/auth_service.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'signup.dart';
 import 'forgot_password.dart';
 
@@ -29,24 +31,44 @@ class LoginScreenState extends State<LoginScreen> {
   }
 
   void _login() async {
-  if (_formKey.currentState!.validate()) {
+    if (!(_formKey.currentState?.validate() ?? false)) return;
+    
     setState(() {
       _isLoading = true;
     });
 
-    final email = _emailController.text.trim();
-    final password = _passwordController.text;
+    try {
+      final email = _emailController.text.trim();
+      final password = _passwordController.text;
 
-    // Call your local verification function
-    final bool success = await storage.verifyOfflineLogin(email, password);
+      // Authenticate with Firebase Auth
+      final user = await AuthService().signInWithEmail(email, password);
 
-    if (mounted) {
-      setState(() {
-        _isLoading = false;
-      });
+      if (!mounted) return;
 
-      if (success) {
+      if (user != null) {
+        // Get username from Firestore or use displayName
+        String username = user.displayName ?? user.email?.split('@')[0] ?? 'User';
+        
+        // Try to get username from Firestore
+        try {
+          final userDoc = await FirebaseFirestore.instance
+              .collection('users')
+              .doc(user.uid)
+              .get();
+          if (userDoc.exists) {
+            username = userDoc.data()?['username'] ?? username;
+          }
+        } catch (e) {
+          // If Firestore fetch fails, use the username we already have
+        }
+
+        // Save credentials locally for offline capability
         await storage.setLoggedIn(true);
+        await storage.saveUserCredentials(email, password, username);
+
+        if (!mounted) return;
+        
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
             content: Text('Login successful!'),
@@ -58,17 +80,31 @@ class LoginScreenState extends State<LoginScreen> {
           context,
           MaterialPageRoute(builder: (context) => const HomeScreen()),
         );
-      } else {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Incorrect email or password.'),
-            backgroundColor: Colors.red,
+      }
+    } catch (e) {
+      if (!mounted) return;
+      
+      setState(() {
+        _isLoading = false;
+      });
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            e.toString().replaceAll('Exception: ', ''),
+            style: GoogleFonts.inter(),
           ),
-        );
+          backgroundColor: Colors.red,
+        ),
+      );
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+        });
       }
     }
   }
-}
 
 
   @override

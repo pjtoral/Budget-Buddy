@@ -1,4 +1,3 @@
-import 'package:budgetbuddy_project/services/balance_service.dart';
 import 'package:budgetbuddy_project/services/local_storage_service.dart';
 import 'package:budgetbuddy_project/services/service_locator.dart';
 import 'package:budgetbuddy_project/widgets/balance_card.dart';

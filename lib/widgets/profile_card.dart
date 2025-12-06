@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
-/// A stateless widget that displays a user profile card with an avatar and username.
+/// A stateless widget that displays a user profile card with username.
 ///
-/// The `ProfileCard` widget shows a greeting message, the user's avatar image,
-/// username, and the app logo. It is typically displayed at the top of the home
-/// page to provide a personalized welcome experience.
+/// The `ProfileCard` widget shows a greeting message, username, and the app logo.
+/// It is typically displayed at the top of the home page to provide a personalized
+/// welcome experience.
 ///
 /// The card uses responsive sizing based on screen dimensions to ensure proper
 /// display across different device sizes.
@@ -13,18 +13,12 @@ class ProfileCard extends StatelessWidget {
   /// The username to display on the profile card.
   final String username;
 
-  /// The asset path to the user's avatar image.
-  ///
-  /// This should be a valid path to an image asset in the project's assets folder.
-  final String avatarAssetPath;
-
   /// Creates a `ProfileCard` widget.
   ///
-  /// The [username] and [avatarAssetPath] parameters are required and must not be null.
+  /// The [username] parameter is required and must not be null.
   const ProfileCard({
     super.key,
     required this.username,
-    required this.avatarAssetPath,
   });
 
   @override
@@ -48,12 +42,6 @@ class ProfileCard extends StatelessWidget {
       ),
       child: Row(
         children: [
-          // Display the user's avatar as a circular image.
-          CircleAvatar(
-            radius: screenWidth * 0.07,
-            backgroundImage: AssetImage(avatarAssetPath),
-          ),
-          SizedBox(width: screenWidth * 0.03),
           // Display the greeting and username.
           Expanded(
             child: Column(

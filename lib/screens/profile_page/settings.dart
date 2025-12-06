@@ -13,9 +13,6 @@ class _SettingsPageState extends State<SettingsPage> {
 
   @override
   Widget build(BuildContext context) {
-    // Remove dark mode logic, always use light mode
-    bool isDarkMode = false;
-
     return Scaffold(
       appBar: AppBar(
         title: Text('Settings'),
@@ -44,46 +41,6 @@ class _SettingsPageState extends State<SettingsPage> {
             child: Column(
               children: [
                 _expandableSettingsTile(
-                  index: 0,
-                  icon: Icons.person,
-                  title: 'Account',
-                  isExpanded: _expandedTileIndex == 0,
-                  onTap: () {
-                    setState(() {
-                      _expandedTileIndex = _expandedTileIndex == 0 ? null : 0;
-                    });
-                  },
-                  children: [
-                    ListTile(
-                      title: Text('Change Name', style: TextStyle(color: Colors.black87)),
-                      onTap: () {},
-                    ),
-                    ListTile(
-                      title: Text('Change Email', style: TextStyle(color: Colors.black87)),
-                      onTap: () {},
-                    ),
-                  ],
-                ),
-                Divider(),
-                _expandableSettingsTile(
-                  index: 1,
-                  icon: Icons.lock,
-                  title: 'Privacy',
-                  isExpanded: _expandedTileIndex == 1,
-                  onTap: () {
-                    setState(() {
-                      _expandedTileIndex = _expandedTileIndex == 1 ? null : 1;
-                    });
-                  },
-                  children: [
-                    ListTile(
-                      title: Text('Change Password', style: TextStyle(color: Colors.black87)),
-                      onTap: () {},
-                    ),
-                  ],
-                ),
-                Divider(),
-                _expandableSettingsTile(
                   index: 2,
                   icon: Icons.notifications,
                   title: 'Notifications',
@@ -94,9 +51,18 @@ class _SettingsPageState extends State<SettingsPage> {
                     });
                   },
                   children: [
-                    ListTile(
-                      title: Text('Enable Push Notifications', style: TextStyle(color: Colors.black87)),
-                      onTap: () {},
+                    Theme(
+                      data: Theme.of(context).copyWith(
+                        splashColor: Colors.transparent,
+                        highlightColor: Colors.transparent,
+                      ),
+                      child: ListTile(
+                        title: Text(
+                          'Enable Push Notifications',
+                          style: TextStyle(color: Colors.black87),
+                        ),
+                        onTap: () {},
+                      ),
                     ),
                   ],
                 ),
@@ -112,9 +78,18 @@ class _SettingsPageState extends State<SettingsPage> {
                     });
                   },
                   children: [
-                    ListTile(
-                      title: Text('Theme Options', style: TextStyle(color: Colors.black87)),
-                      onTap: () {},
+                    Theme(
+                      data: Theme.of(context).copyWith(
+                        splashColor: Colors.transparent,
+                        highlightColor: Colors.transparent,
+                      ),
+                      child: ListTile(
+                        title: Text(
+                          'Theme Options',
+                          style: TextStyle(color: Colors.black87),
+                        ),
+                        onTap: () {},
+                      ),
                     ),
                   ],
                 ),
@@ -131,7 +106,10 @@ class _SettingsPageState extends State<SettingsPage> {
                   },
                   children: [
                     ListTile(
-                      title: Text('Version 1.0.0', style: TextStyle(color: Colors.black87)),
+                      title: Text(
+                        'Version 1.0.0',
+                        style: TextStyle(color: Colors.black87),
+                      ),
                     ),
                   ],
                 ),
@@ -151,28 +129,35 @@ class _SettingsPageState extends State<SettingsPage> {
     required VoidCallback onTap,
     required List<Widget> children,
   }) {
-    return ExpansionTile(
-      leading: Icon(icon, color: Colors.black87),
-      title: Text(
-        title,
-        style: TextStyle(
-          fontSize: 16,
-          fontWeight: FontWeight.w500,
-          color: Colors.black87,
+    return Theme(
+      data: Theme.of(context).copyWith(
+        splashColor: Colors.transparent,
+        highlightColor: Colors.transparent,
+        hoverColor: Colors.transparent,
+      ),
+      child: ExpansionTile(
+        leading: Icon(icon, color: Colors.black87),
+        title: Text(
+          title,
+          style: TextStyle(
+            fontSize: 16,
+            fontWeight: FontWeight.w500,
+            color: Colors.black87,
+          ),
         ),
+        shape: Border(),
+        trailing: Icon(
+          isExpanded ? Icons.keyboard_arrow_up : Icons.keyboard_arrow_down,
+          color: Colors.black26,
+        ),
+        initiallyExpanded: isExpanded,
+        onExpansionChanged: (expanded) => onTap(),
+        tilePadding: EdgeInsets.symmetric(horizontal: 8),
+        childrenPadding: EdgeInsets.only(left: 32, right: 8, bottom: 8),
+        backgroundColor: Colors.white,
+        collapsedBackgroundColor: Colors.white,
+        children: children,
       ),
-      shape: Border(),
-      trailing: Icon(
-        isExpanded ? Icons.keyboard_arrow_up : Icons.keyboard_arrow_down,
-        color: Colors.black26,
-      ),
-      initiallyExpanded: isExpanded,
-      onExpansionChanged: (expanded) => onTap(),
-      tilePadding: EdgeInsets.symmetric(horizontal: 8),
-      childrenPadding: EdgeInsets.only(left: 32, right: 8, bottom: 8),
-      backgroundColor: Colors.white,
-      collapsedBackgroundColor: Colors.white,
-      children: children,
     );
   }
 }

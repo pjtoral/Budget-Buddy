@@ -79,29 +79,29 @@ class HelpSupportPage extends StatelessWidget {
                 ],
               ),
             ),
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 0),
-              child: ElevatedButton.icon(
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.red,
-                  foregroundColor: Colors.white,
-                  minimumSize: Size(double.infinity, 48),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                ),
-                icon: Icon(Icons.delete_forever),
-                label: Text('Reset Local Storage'),
-                onPressed: () async {
-                  await locator<LocalStorageService>().clearAll();
-                  if (context.mounted) {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(content: Text('Local storage cleared!')),
-                    );
-                  }
-                },
-              ),
-            ),
+            // Padding(
+            //   padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 0),
+            //   child: ElevatedButton.icon(
+            //     style: ElevatedButton.styleFrom(
+            //       backgroundColor: Colors.red,
+            //       foregroundColor: Colors.white,
+            //       minimumSize: Size(double.infinity, 48),
+            //       shape: RoundedRectangleBorder(
+            //         borderRadius: BorderRadius.circular(12),
+            //       ),
+            //     ),
+            //     icon: Icon(Icons.delete_forever),
+            //     label: Text('Reset Local Storage'),
+            //     onPressed: () async {
+            //       await locator<LocalStorageService>().clearAll();
+            //       if (context.mounted) {
+            //         ScaffoldMessenger.of(context).showSnackBar(
+            //           SnackBar(content: Text('Local storage cleared!')),
+            //         );
+            //       }
+            //     },
+            //   ),
+            // ),
           ],
         ),
       ),
