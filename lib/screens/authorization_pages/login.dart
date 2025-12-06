@@ -5,6 +5,7 @@ import 'package:budgetbuddy_project/services/auth_service.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'signup.dart';
 import 'forgot_password.dart';
 
@@ -17,6 +18,9 @@ class LoginScreen extends StatefulWidget {
 
 class LoginScreenState extends State<LoginScreen> {
   final LocalStorageService storage = locator<LocalStorageService>();
+  final FirebaseAuth _auth = FirebaseAuth.instance;
+  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
+  
   final _formKey = GlobalKey<FormState>();
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
@@ -28,6 +32,60 @@ class LoginScreenState extends State<LoginScreen> {
     _emailController.dispose();
     _passwordController.dispose();
     super.dispose();
+  }
+
+  /// Authenticate user with Firebase
+  Future<bool> authenticateWithFirestore(String email, String password) async {
+    try {
+      UserCredential userCredential = await _auth.signInWithEmailAndPassword(
+        email: email,
+        password: password,
+      );
+      return userCredential.user != null;
+    } on FirebaseAuthException catch (e) {
+      print('Firebase Auth Error: ${e.code} - ${e.message}');
+      return false;
+    } catch (e) {
+      print('Error during authentication: $e');
+      return false;
+    }
+  }
+
+  /// Fetch username from Firestore
+  Future<String> getUsernameFromFirestore(String email) async {
+    try {
+      // Query the users collection for a document with matching email
+      QuerySnapshot querySnapshot = await _firestore
+          .collection('users')
+          .where('email', isEqualTo: email)
+          .limit(1)
+          .get();
+
+      if (querySnapshot.docs.isNotEmpty) {
+        // Get the username field from the first matching document
+        final userData = querySnapshot.docs.first.data() as Map<String, dynamic>;
+        return userData['username'] ?? 'User';
+      }
+      
+      // Fallback: try using the current user's UID
+      final currentUser = _auth.currentUser;
+      if (currentUser != null) {
+        DocumentSnapshot userDoc = await _firestore
+            .collection('users')
+            .doc(currentUser.uid)
+            .get();
+        
+        if (userDoc.exists) {
+          final userData = userDoc.data() as Map<String, dynamic>;
+          return userData['username'] ?? 'User';
+        }
+      }
+      
+      return 'User'; // Default fallback
+    } catch (e) {
+      print('Error fetching username: $e');
+      return 'User';
+    }
   }
 
   void _login() async {
@@ -114,13 +172,13 @@ class LoginScreenState extends State<LoginScreen> {
       body: SafeArea(
         child: Center(
           child: SingleChildScrollView(
-            padding: EdgeInsets.all(24.0),
+            padding: const EdgeInsets.all(24.0),
             child: Form(
               key: _formKey,
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  //Application Name
+                  // Application Name
                   Text(
                     'Budget Buddy',
                     style: GoogleFonts.inter(
@@ -128,25 +186,24 @@ class LoginScreenState extends State<LoginScreen> {
                       fontWeight: FontWeight.w600,
                     ),
                   ),
+                  const SizedBox(height: 16),
+                  
                   // Logo Image
                   Image.asset('assets/images/logo.png', height: 80, width: 80),
-                  SizedBox(height: 24),
-                  SizedBox(height: 8),
-                  SizedBox(height: 40),
+                  const SizedBox(height: 40),
 
-                  // Row for "Log in to your account!" and Email Field
-                  Row(
-                    children: [
-                      Text(
-                        'Log in to your account!',
-                        style: GoogleFonts.inter(
-                          fontSize: 20,
-                          fontWeight: FontWeight.bold,
-                        ),
+                  // Header
+                  Align(
+                    alignment: Alignment.centerLeft,
+                    child: Text(
+                      'Log in to your account!',
+                      style: GoogleFonts.inter(
+                        fontSize: 20,
+                        fontWeight: FontWeight.bold,
                       ),
-                    ],
+                    ),
                   ),
-                  SizedBox(height: 16),
+                  const SizedBox(height: 16),
 
                   // Email Field
                   TextFormField(
@@ -154,7 +211,7 @@ class LoginScreenState extends State<LoginScreen> {
                     keyboardType: TextInputType.emailAddress,
                     decoration: InputDecoration(
                       labelText: 'Email',
-                      prefixIcon: Icon(Icons.email_outlined),
+                      prefixIcon: const Icon(Icons.email_outlined),
                       border: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(12),
                       ),
@@ -165,15 +222,14 @@ class LoginScreenState extends State<LoginScreen> {
                       if (value == null || value.isEmpty) {
                         return 'Please enter your email';
                       }
-                      if (!RegExp(
-                        r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$',
-                      ).hasMatch(value)) {
+                      if (!RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$')
+                          .hasMatch(value)) {
                         return 'Please enter a valid email';
                       }
                       return null;
                     },
                   ),
-                  SizedBox(height: 16),
+                  const SizedBox(height: 16),
 
                   // Password Field
                   TextFormField(
@@ -181,7 +237,7 @@ class LoginScreenState extends State<LoginScreen> {
                     obscureText: !_isPasswordVisible,
                     decoration: InputDecoration(
                       labelText: 'Password',
-                      prefixIcon: Icon(Icons.lock_outlined),
+                      prefixIcon: const Icon(Icons.lock_outlined),
                       suffixIcon: IconButton(
                         icon: Icon(
                           _isPasswordVisible
@@ -215,14 +271,13 @@ class LoginScreenState extends State<LoginScreen> {
                   ),
 
                   // Forgot Password
-                  SizedBox(height: 10),
-                  Container(
-                    width: double.infinity,
+                  const SizedBox(height: 10),
+                  Align(
                     alignment: Alignment.centerLeft,
                     child: TextButton(
                       style: TextButton.styleFrom(
                         padding: EdgeInsets.zero,
-                        minimumSize: Size(0, 0),
+                        minimumSize: const Size(0, 0),
                         tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                       ),
                       onPressed: () {
@@ -243,7 +298,7 @@ class LoginScreenState extends State<LoginScreen> {
                       ),
                     ),
                   ),
-                  SizedBox(height: 20),
+                  const SizedBox(height: 20),
 
                   // Login Button
                   SizedBox(
@@ -259,45 +314,43 @@ class LoginScreenState extends State<LoginScreen> {
                         ),
                         disabledBackgroundColor: Colors.black.withOpacity(0.6),
                       ),
-                      child:
-                          _isLoading
-                              ? SizedBox(
-                                width: 20,
-                                height: 20,
-                                child: CircularProgressIndicator(
-                                  color: Colors.white,
-                                  strokeWidth: 2,
-                                ),
-                              )
-                              : Text(
-                                'Login',
-                                style: GoogleFonts.inter(
-                                  fontSize: 16,
-                                  fontWeight: FontWeight.bold,
-                                ),
+                      child: _isLoading
+                          ? const SizedBox(
+                              width: 20,
+                              height: 20,
+                              child: CircularProgressIndicator(
+                                color: Colors.white,
+                                strokeWidth: 2,
                               ),
+                            )
+                          : Text(
+                              'Login',
+                              style: GoogleFonts.inter(
+                                fontSize: 16,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
                     ),
                   ),
-                  SizedBox(height: 16),
+                  const SizedBox(height: 16),
 
                   // Sign Up
                   TextButton(
-                    onPressed:
-                        _isLoading
-                            ? null
-                            : () {
-                              Navigator.push(
-                                context,
-                                MaterialPageRoute(
-                                  builder: (context) => SignUpScreen(),
-                                ),
-                              );
-                            },
+                    onPressed: _isLoading
+                        ? null
+                        : () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => SignUpScreen(),
+                              ),
+                            );
+                          },
                     child: RichText(
                       text: TextSpan(
                         text: "Don't have an account? ",
                         style: GoogleFonts.inter(
-                          color: const Color.fromARGB(255, 0, 0, 0),
+                          color: Colors.black,
                           fontSize: 15,
                         ),
                         children: [
