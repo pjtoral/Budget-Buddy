@@ -47,18 +47,9 @@ class HelpSupportPage extends StatelessWidget {
                   ),
                   SizedBox(height: 12),
                   _faqItem(
-                    question: 'How do I add a new task?',
+                    question: 'How do I add a income or expense?',
                     answer:
-                        'Tap the "+" button on the home screen to add a new task.',
-                  ),
-                  _faqItem(
-                    question: 'How do I mark a task as completed?',
-                    answer:
-                        'Change its status to "Completed" from the task card.',
-                  ),
-                  _faqItem(
-                    question: 'Can I edit or delete a task?',
-                    answer: 'Yes, tap on a task to edit or remove it.',
+                        'Tap the "Add" button on the home screen to add a new income or expense.',
                   ),
                   SizedBox(height: 20),
                   Text(
@@ -72,7 +63,7 @@ class HelpSupportPage extends StatelessWidget {
                   SizedBox(height: 8),
                   Text(
                     'For further assistance, email us at:\n'
-                    'support@budgetbuddy.app\n\n'
+                    'budgetbuddy.support@gmail.com\n\n'
                     'We are here to help you manage your tasks better!',
                     style: TextStyle(fontSize: 14, color: Colors.black87),
                   ),

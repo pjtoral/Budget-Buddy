@@ -101,7 +101,6 @@ class _HomePageState extends State<HomePage>
     }
   }
 
-
   Future<void> _loadTransactionSummaries() async {
     final allTransactions = <TransactionModel>[];
     final userCategories = _localStorageService.getCategories();
@@ -117,67 +116,68 @@ class _HomePageState extends State<HomePage>
     final transactions = allTransactions;
     final now = DateTime.now();
 
-    double thisWeekTotal = 0;
-    double lastWeekTotal = 0;
-    double thisMonthTotal = 0;
-    double lastMonthTotal = 0;
+    // Calculate week boundaries
+    final currentWeek = DateTime(
+      now.year,
+      now.month,
+      now.day - now.weekday + 1,
+    );
+
+    // Calculate month boundaries
+    final thisMonthStart = DateTime(now.year, now.month, 1);
+
+    // Separate income and expenses
+    double thisWeekExpenses = 0;
+    double thisMonthIncome = 0;
+    double thisMonthExpenses = 0;
 
     for (var tx in transactions) {
       final date = tx.date;
       final amount = tx.amount;
+      final absAmount = amount.abs();
 
-      final currentWeek = DateTime(
-        now.year,
-        now.month,
-        now.day - now.weekday + 1,
-      );
-      final lastWeekStart = currentWeek.subtract(const Duration(days: 7));
-      final lastWeekEnd = currentWeek.subtract(const Duration(days: 1));
-
+      // This week calculations
       if (date.isAfter(currentWeek.subtract(const Duration(days: 1)))) {
-        thisWeekTotal += amount;
-      } else if (date.isAfter(
-            lastWeekStart.subtract(const Duration(days: 1)),
-          ) &&
-          date.isBefore(lastWeekEnd.add(const Duration(days: 1)))) {
-        lastWeekTotal += amount;
+        if (amount < 0) {
+          thisWeekExpenses += absAmount;
+        }
       }
 
-      if (date.year == now.year && date.month == now.month) {
-        thisMonthTotal += amount;
-      }
-
-      final lastMonth = DateTime(now.year, now.month - 1);
-      if (date.year == lastMonth.year && date.month == lastMonth.month) {
-        lastMonthTotal += amount;
+      // This month calculations
+      if (date.isAfter(thisMonthStart.subtract(const Duration(days: 1))) &&
+          date.isBefore(now.add(const Duration(days: 1)))) {
+        if (amount > 0) {
+          thisMonthIncome += absAmount;
+        } else {
+          thisMonthExpenses += absAmount;
+        }
       }
     }
 
     setState(() {
       _transactionSummaries = [
         {
+          'title': 'Income',
+          'amount': formatMoney(thisMonthIncome),
+          'amountColor': Colors.green,
+        },
+        {
+          'title': 'Expenses',
+          'amount': formatMoney(thisMonthExpenses),
+          'amountColor': Colors.red,
+        },
+        {
           'title': 'This Week',
-          'amount': formatMoney(thisWeekTotal),
-          'amountColor': thisWeekTotal >= 0 ? Colors.green : Colors.red,
-          'subtitle': 'vs last week',
+          'amount': formatMoney(thisWeekExpenses),
+          'amountColor': Colors.red,
         },
         {
-          'title': 'Last Week',
-          'amount': formatMoney(lastWeekTotal),
-          'amountColor': lastWeekTotal >= 0 ? Colors.green : Colors.red,
-          'subtitle': '',
-        },
-        {
-          'title': 'This Month',
-          'amount': formatMoney(thisMonthTotal),
-          'amountColor': thisMonthTotal >= 0 ? Colors.green : Colors.red,
-          'subtitle': 'vs last month',
-        },
-        {
-          'title': 'Last Month',
-          'amount': formatMoney(lastMonthTotal),
-          'amountColor': lastMonthTotal >= 0 ? Colors.green : Colors.red,
-          'subtitle': '',
+          'title': 'Net',
+          'amount': formatMoney(thisMonthIncome - thisMonthExpenses),
+          'amountColor':
+              (thisMonthIncome - thisMonthExpenses) >= 0
+                  ? Colors.green
+                  : Colors.red,
         },
       ];
     });
@@ -210,18 +210,38 @@ class _HomePageState extends State<HomePage>
     chartLabels = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
     chartDates = [];
 
-    for (int i = 6; i >= 0; i--) {
-      final date = now.subtract(Duration(days: i));
+    // Calculate the start of the week (Monday) - same logic as analytics page
+    final currentWeekday = now.weekday; // 1 = Monday, 7 = Sunday
+    final weekStart = now.subtract(Duration(days: currentWeekday - 1));
+
+    for (int i = 0; i < 7; i++) {
+      final date = weekStart.add(Duration(days: i));
       chartDates.add('${_monthName(date.month)} ${date.day}, ${date.year}');
     }
 
     for (final transaction in transactions) {
       // Only count expenses (negative amounts) for spending graph
       if (transaction.amount < 0) {
-        final daysAgo = now.difference(transaction.date).inDays;
-        if (daysAgo >= 0 && daysAgo < 7) {
-          final index = 6 - daysAgo;
-          chartData[index] += transaction.amount.abs();
+        // Normalize dates to compare only the date part (ignore time)
+        final txDate = DateTime(
+          transaction.date.year,
+          transaction.date.month,
+          transaction.date.day,
+        );
+        final weekStartDate = DateTime(
+          weekStart.year,
+          weekStart.month,
+          weekStart.day,
+        );
+
+        // Check if transaction is within this week
+        if (txDate.isAfter(weekStartDate.subtract(const Duration(days: 1))) &&
+            txDate.isBefore(weekStartDate.add(const Duration(days: 7)))) {
+          // Calculate which day of the week (0 = Monday, 6 = Sunday)
+          final dayOfWeek = txDate.weekday - 1; // Convert 1-7 to 0-6
+          if (dayOfWeek >= 0 && dayOfWeek < 7) {
+            chartData[dayOfWeek] += transaction.amount.abs();
+          }
         }
       }
     }
@@ -267,9 +287,7 @@ class _HomePageState extends State<HomePage>
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               // Profile Card
-              ProfileCard(
-                username: _username,
-              ),
+              ProfileCard(username: _username),
               // Balance Card
               const BalanceCard(),
               // Transactions Summary Card

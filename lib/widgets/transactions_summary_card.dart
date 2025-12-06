@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:budgetbuddy_project/common/string_helpers.dart';
 
 /// A stateless widget that displays a horizontal scrollable list of transaction summaries.
 ///
@@ -123,15 +122,6 @@ class TransactionSummaryCard extends StatelessWidget {
                                 color: summary['amountColor'],
                                 fontWeight: FontWeight.bold,
                                 fontSize: screenWidth * 0.05,
-                              ),
-                            ),
-                            SizedBox(height: screenHeight * 0.005),
-                            // Display the subtitle with additional context.
-                            Text(
-                              summary['subtitle'],
-                              style: GoogleFonts.inter(
-                                color: Colors.grey[600],
-                                fontSize: screenWidth * 0.027,
                               ),
                             ),
                           ],
