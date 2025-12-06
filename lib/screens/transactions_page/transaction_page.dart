@@ -35,6 +35,14 @@ class _TransactionsPageState extends State<TransactionsPage> {
     final TextEditingController _searchController = TextEditingController();
     String _searchQuery = '';
 
+    // Date Range Filter
+    String _selectedTimeFrame = 'All'; // 'All', 'Day', 'Week', 'Month', '3 Months'
+    final List<String> _timeFrames = ['All', 'Day', 'Week', 'Month', '3 Months'];
+
+    // Day-of-Week Filter
+    final List<String> _daysOfWeek = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+    List<bool> _selectedDays = [false, false, false, false, false, false, false]; // All unselected by default
+
   @override
   void initState() {
     super.initState();
@@ -45,6 +53,60 @@ class _TransactionsPageState extends State<TransactionsPage> {
   void dispose() {
     _searchController.dispose();
     super.dispose();
+  }
+
+  // Get date range based on selected timeframe
+  DateTimeRange _getDateRange() {
+    final now = DateTime.now();
+    final endDate = DateTime(now.year, now.month, now.day, 23, 59, 59);
+    DateTime startDate;
+
+    switch (_selectedTimeFrame) {
+      case 'Day':
+        startDate = DateTime(now.year, now.month, now.day, 0, 0, 0);
+        break;
+      case 'Week':
+        final daysToSubtract = now.weekday - 1; // Monday = 1
+        startDate = now.subtract(Duration(days: daysToSubtract));
+        startDate = DateTime(startDate.year, startDate.month, startDate.day, 0, 0, 0);
+        break;
+      case 'Month':
+        startDate = DateTime(now.year, now.month, 1, 0, 0, 0);
+        break;
+      case '3 Months':
+        startDate = DateTime(now.year, now.month - 3, 1, 0, 0, 0);
+        break;
+      default: // 'All'
+        startDate = DateTime(1900, 1, 1); // Far past for 'All' data
+        break;
+    }
+
+    return DateTimeRange(start: startDate, end: endDate);
+  }
+
+  // Check if a transaction date matches selected days of week
+  bool _matchesDayOfWeek(DateTime txDate) {
+    // If no days are selected, show all days
+    if (!_selectedDays.any((selected) => selected)) {
+      return true;
+    }
+    // weekday: 1 = Monday, 7 = Sunday
+    final dayIndex = txDate.weekday - 1;
+    return dayIndex >= 0 && dayIndex < _selectedDays.length && _selectedDays[dayIndex];
+  }
+
+  // Helper: toggle day selection
+  void _toggleDay(int dayIndex) {
+    setState(() {
+      _selectedDays[dayIndex] = !_selectedDays[dayIndex];
+    });
+  }
+
+  // Helper: clear all day selections
+  void _clearDaySelections() {
+    setState(() {
+      _selectedDays = [false, false, false, false, false, false, false];
+    });
   }
 
   Future<void> _loadCategories() async {
@@ -77,18 +139,24 @@ class _TransactionsPageState extends State<TransactionsPage> {
         }
       }
 
+      // Apply date range filtering
+      final dateRange = _getDateRange();
+      var results = allTransactions
+          .where((tx) => tx.date.isAfter(dateRange.start) && tx.date.isBefore(dateRange.end))
+          .toList();
+
+      // Apply day-of-week filtering
+      results = results.where((tx) => _matchesDayOfWeek(tx.date)).toList();
+
       // Apply search filtering if present
-      var results = allTransactions;
       final q = _searchQuery.trim().toLowerCase();
       if (q.isNotEmpty) {
         results = results.where((tx) {
           final desc = tx.description.toLowerCase();
           final cat = tx.category.toLowerCase();
           if (desc.contains(q) || cat.contains(q)) return true;
-          // Allow keyword searches for common intents
           if ((q.contains('top') || q.contains('income') || q.contains('inflow')) && tx.amount > 0) return true;
           if ((q.contains('expense') || q.contains('spend') || q.contains('outflow')) && tx.amount < 0) return true;
-          // Match numeric values (e.g., "100") against amount
           final numeric = double.tryParse(q.replaceAll(RegExp('[^0-9.]'), ''));
           if (numeric != null) {
             if (tx.amount.abs() == numeric) return true;
@@ -102,8 +170,18 @@ class _TransactionsPageState extends State<TransactionsPage> {
       final transactions = await _transactionServices.getTransactionByCategory(
         _selectedCategory,
       );
+
+      // Apply date range filtering
+      final dateRange = _getDateRange();
+      var results = transactions
+          .where((tx) => tx.date.isAfter(dateRange.start) && tx.date.isBefore(dateRange.end))
+          .toList();
+
+      // Apply day-of-week filtering
+      results = results.where((tx) => _matchesDayOfWeek(tx.date)).toList();
+
+      // Apply search filtering
       final q = _searchQuery.trim().toLowerCase();
-      var results = transactions;
       if (q.isNotEmpty) {
         results = results.where((tx) {
           final desc = tx.description.toLowerCase();
@@ -197,6 +275,117 @@ class _TransactionsPageState extends State<TransactionsPage> {
                     ),
                   ),
                 ),
+
+              // Time Frame Filter
+              Padding(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: _horizontalPadding,
+                  vertical: 8,
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Time Period: ',
+                      style: GoogleFonts.inter(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    SingleChildScrollView(
+                      scrollDirection: Axis.horizontal,
+                      child: Row(
+                        children: _timeFrames.map((timeFrame) {
+                          return Padding(
+                            padding: const EdgeInsets.only(right: 8),
+                            child: ChoiceChip(
+                              label: Text(timeFrame),
+                              selected: _selectedTimeFrame == timeFrame,
+                              selectedColor: Colors.black,
+                              backgroundColor: Colors.grey[200],
+                              labelStyle: GoogleFonts.inter(
+                                color: _selectedTimeFrame == timeFrame
+                                    ? Colors.white
+                                    : Colors.black,
+                                fontWeight: FontWeight.w500,
+                              ),
+                              onSelected: (_) {
+                                setState(() {
+                                  _selectedTimeFrame = timeFrame;
+                                });
+                              },
+                            ),
+                          );
+                        }).toList(),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+
+              // Day-of-Week Filter
+              Padding(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: _horizontalPadding,
+                  vertical: 8,
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text(
+                          'Days: ',
+                          style: GoogleFonts.inter(
+                            fontSize: 14,
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                        if (_selectedDays.any((selected) => selected))
+                          TextButton(
+                            onPressed: _clearDaySelections,
+                            child: Text(
+                              'Clear',
+                              style: GoogleFonts.inter(
+                                color: Colors.blue,
+                                fontSize: 12,
+                              ),
+                            ),
+                          ),
+                      ],
+                    ),
+                    const SizedBox(height: 8),
+                    SingleChildScrollView(
+                      scrollDirection: Axis.horizontal,
+                      child: Row(
+                        children: List.generate(
+                          _daysOfWeek.length,
+                          (index) => Padding(
+                            padding: const EdgeInsets.only(right: 8),
+                            child: FilterChip(
+                              label: Text(_daysOfWeek[index]),
+                              selected: _selectedDays[index],
+                              backgroundColor: Colors.grey[200],
+                              selectedColor: Colors.black,
+                              labelStyle: GoogleFonts.inter(
+                                color: _selectedDays[index]
+                                    ? Colors.white
+                                    : Colors.black,
+                                fontWeight: FontWeight.w500,
+                              ),
+                              onSelected: (_) {
+                                _toggleDay(index);
+                              },
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
 
               // Search Bar
               Padding(
