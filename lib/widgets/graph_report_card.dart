@@ -110,9 +110,9 @@ class GraphReportCard extends StatelessWidget {
                     // Display the chart title based on category and period.
                     Text(
                       '$categoryName ${selectedPeriod == 'Week'
-                          ? 'Daily'
+                          ? 'Weekly'
                           : selectedPeriod == 'Month'
-                          ? 'Daily'
+                          ? 'Monthly'
                           : 'Weekly'} Spending',
                       style: GoogleFonts.inter(
                         fontWeight: FontWeight.bold,
